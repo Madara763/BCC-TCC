@@ -41,7 +41,9 @@ typedef struct {
 } aresta_3d;
 
 typedef struct {
-  vector<aresta_3d> borda; //lista de arestas que delimitam o semiespaco da face
+  //lista de arestas que delimitam o semiespaco da face
+  //Guarda os indices das semiarestas da face no mapa_
+  vector<uint64_t> borda; 
   t_ponto n1{0.0}, n2{0.0}, n3{0.0}; //coord do vetor normal da face
 } face;
 
@@ -51,17 +53,38 @@ struct semi_aresta{
 
   uint64_t id; //identificador unico da semiaresta
 
-  ponto_3d ini; //vertice onde inicia a semi aresta
+  //Para identificar vertices e faces
+  uint64_t ind_vertice;   // indice/chave do mapa_vert da DCEL
+  uint64_t ind_face;      // indice/chave da mapa_face da DCEL
 
-  semi_aresta *prox{nullptr}; //next ptr
-  semi_aresta *ante{nullptr}; //previous prt
-  semi_aresta *par{nullptr};  //twin
-  face f;
+  //Indice/Chave das semiarestas no mapa_sa da DCEL
+  uint64_t prox{0}; //next ptr
+  uint64_t ante{0}; //previous prt
+  uint64_t par{0};  //twin
   
   // Construtor
   semi_aresta() : id(proximo_id++) {} // cada instância recebe um ID unico
 
 };
+
+struct dcel{
+
+  //Armazena todos os vertices do poliedro
+  //Mantem a mesma relacao ponto/indice do descritor
+  std::vector<ponto_3d> mapa_vertices;
+
+  //Armazena todas as faces do poliedro
+  //Mantem a mesma relacao ponto/indice do descritor
+  std::vector<face> mapa_faces;
+
+  //Armazena todas as semi arestas
+  //A relacao de semi-aresta/indice eh dada pela ordem de criacao, baseada na ondem das faces
+  std::vector<semi_aresta> mapa_sa;
+
+  //Criar metodos para acesso direto 
+
+}
+
 
 //========================================
 // Sobrecargas para Impressao
