@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	if(!validar_parametros(argc, argv, param)) return 1;
 	
 
-	// Le a entrada e gera os vetores de vertices e faces para gerar a dcel
+	// Le a entrada e gera os vetores de vertices e faces para gerar a dcel do primeiro arquivo
 	descritor_dcel* poliedro1 = processa_arq_entrada(param.arq_entrada1);
   
 	// Verifica se o arquivo foi aberto com sucesso
@@ -39,6 +39,26 @@ int main(int argc, char** argv) {
 		msg_erro_ler_arquivo(param.arq_entrada1);
 		return 1;
 	}
+
+	if(imprime_dcel_no_arquivo(param.arq_saida, poliedro1)){
+		msg_erro_escrever_arquivo(param.arq_saida);
+		return 1;
+	}
+
+	// Le a entrada e gera os vetores de vertices e faces para gerar a dcel do segundo arquivo
+	descritor_dcel* poliedro2 = processa_arq_entrada(param.arq_entrada2);
+  
+	// Verifica se o arquivo foi aberto com sucesso
+	if(!poliedro2){
+		msg_erro_ler_arquivo(param.arq_entrada2);
+		return 1;
+	}
+
+	if(imprime_dcel_no_arquivo(param.arq_saida, poliedro2)){
+		msg_erro_escrever_arquivo(param.arq_saida);
+		return 1;
+	}
+
 
 
 	return 0;

@@ -15,10 +15,12 @@ using namespace std; //Para simplificar o uso da stl
 
 //Estrutura gerada ao ler os arquivos com as malhas
 //Usado para gerar a DCEL
+//Nao precisa de destrutor explicito
 struct descritor_dcel{
   vector<ponto_3d> vertices;
   vector<vector<uint64_t>> faces;
 };
+
 
 
 

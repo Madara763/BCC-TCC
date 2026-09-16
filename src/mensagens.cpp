@@ -1,4 +1,5 @@
 /*
+Oferece funcoes auxiliares a main()
 Essa biblioteca contem funcoes para imprimir informacoes na tela
 Criado por: Davi Lazzarin 
 Data: 15/09/2026
@@ -10,7 +11,7 @@ Data: 15/09/2026
 
 using namespace std; //Para simplificar o uso da stl
 
-#define NOME_PROGRAMA "cip"
+inline const char* NOME_PROGRAMA = "cip";
 
 //Aviso para quando os parametros tiverem errados
 void msg_erro_parametros(){
@@ -58,3 +59,7 @@ void msg_erro_abrir_arquivo(){
 void msg_erro_ler_arquivo(string arq){
   cout << "Erro ao ler o arquivo: "<<arq<<".\n";
 };
+
+void msg_erro_escrever_arquivo(string arq){
+  cout << "Erro ao escrever no arquivo: "<<arq<<".\n";
+}

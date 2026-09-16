@@ -1,4 +1,5 @@
 /*
+Oferece funcoes auxiliares a main()
 Essa biblioteca contem funcoes para imprimir informacoes na tela
 Criado por: Davi Lazzarin 
 Data: 15/09/2026
@@ -22,4 +23,5 @@ void msg_falta_arq_entrada();
 void msg_falta_arq_saida();
 void msg_erro_abrir_arquivo();
 void msg_erro_ler_arquivo(string arq);
+void msg_erro_escrever_arquivo(string arq);
 #endif
