@@ -10,8 +10,8 @@ Data: 15/09/2026
 
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
-using namespace std; //Para simplificar o uso da stl
 
 //========================================
 // Defines dos tipos
@@ -21,19 +21,152 @@ using namespace std; //Para simplificar o uso da stl
 //Usado para gerar a DCEL
 //Nao precisa de destrutor explicito
 struct descritor_dcel{
-  vector<ponto_3d> vertices;
-  vector<vector<uint64_t>> faces;
+  std::vector<ponto_3d> pontos;
+  std::vector<vector<uint64_t>> faces;
 };
+
+struct dcel_t{
+
+  //Armazena todos os vertices do poliedro
+  //Mantem a mesma relacao ponto/indice do descritor
+  std::vector<vertice_3d_t> mapa_vertices;
+
+  //Armazena todas as faces do poliedro
+  //Mantem a mesma relacao ponto/indice do descritor
+  std::vector<face_t> mapa_faces;
+
+  //Armazena todas as semi arestas
+  //A relacao de semi-aresta/indice eh dada pela ordem de criacao, baseada na ondem das faces
+  std::vector<semi_aresta_t> mapa_sa;
+
+};
+
+//========================================
+// Sobrecarga impressao da DCEL - PARA DEBUG
+//========================================
+
+
+inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
+
+  os << "\n";
+  os << "========== DCEL ==========\n\n";
+
+
+  // ==========================================================
+  // VERTICES
+  // ==========================================================
+
+  os << "VERTICES\n";
+
+  for (size_t i = 0; i < dcel.mapa_vertices.size(); ++i)
+  {
+    const vertice_3d_t& v = dcel.mapa_vertices[i];
+
+    os << "[" << i << "] ";
+    os << "ponto=("<< v.pos.x << ", "<< v.pos.y << ", "<< v.pos.z << ")";
+    os << "\n";
+  }
+
+  os << "\n";
+  // ==========================================================
+  // FACES
+  // ==========================================================
+
+  os << "FACES\n";
+
+  for (size_t i = 0; i < dcel.mapa_faces.size(); ++i)
+  {
+    const face_t& f = dcel.mapa_faces[i];
+
+    os << "[" << i << "] ";
+    os << "SA inicial=";
+    if (f.ind_sa_inicial == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << f.ind_sa_inicial;
+
+    os << "\n";
+
+    os << "    Normal=("<< f.n1 << ", "<< f.n2 << ", "<< f.n3 << ")\n";
+    os << "    Plano: "<< f.n1 << "x + "<< f.n2 << "y + "<< f.n3 << "z + "<< f.d<< " = 0\n";
+  }
+
+  os << "\n";
+
+
+  // ==========================================================
+  // SEMI-ARESTAS
+  // ==========================================================
+
+  os << "SEMI-ARESTAS\n";
+
+  for (size_t i = 0; i < dcel.mapa_sa.size(); ++i)
+  {
+    const semi_aresta_t& sa = dcel.mapa_sa[i];
+
+    os << "[" << i << "] ";
+    os << "vertice=";
+    if (sa.ind_vertice == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << sa.ind_vertice;
+
+    os << " face=";
+
+    if (sa.ind_face == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << sa.ind_face;
+
+    os << " prox=";
+
+    if (sa.prox == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << sa.prox;
+
+    os << " ante=";
+
+    if (sa.ante == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << sa.ante;
+
+    os << " par=";
+
+    if (sa.par == INVALID_INDEX)
+      os << "INVALID";
+    else
+      os << sa.par;
+
+    os << "\n";
+  }
+
+  os << "\n";
+  os << "==========================\n";
+
+  return os;
+}
 
 
 //========================================
 // Defines das Funcoes
 //========================================
 
+//Cria uma dcel a partir do descritor
+dcel_t* cria_dcel(descritor_dcel* descritor);
 
+//Metodos do artigo
 
+//Retorna as meia arestas que saem do vertice, em anti-horario
+std::vector<size_t> vertex(const dcel_t& d, size_t ind_vertice);
 
+//Retorna as meia arestas que limitam a face
+std::vector<size_t> face(const dcel_t& d, size_t ind_face);
 
+//Copia o vetor de pontos do descritor para o vetor de vertices da DCEL
+//Os vertices nao possuem indice da semi-aresta incidente
+void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
 
 
 #endif

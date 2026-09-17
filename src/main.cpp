@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	//Verificacao de parametros
 	if(!validar_parametros(argc, argv, param)) return 1;
 	
-
+	//===============Le os arquivos e gera os descritores===============
 	// Le a entrada e gera os vetores de vertices e faces para gerar a dcel do primeiro arquivo
 	descritor_dcel* poliedro1 = processa_arq_entrada(param.arq_entrada1);
   
@@ -56,6 +56,14 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	//===============Gera a DCEl a partir dos descritores===============
+
+	dcel_t* d1 = cria_dcel(poliedro1);
+
+	cout<<*d1;
+
+	//Libera memoria
+	delete(d1);
 	delete(poliedro1);
 	delete(poliedro2);
 

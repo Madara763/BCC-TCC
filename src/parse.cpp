@@ -36,12 +36,12 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
 		ponto_3d p;
     for(std::uint64_t i=0; i<nvertices; i++){
       arquivo>>p.x>>p.y>>p.z;
-      dcel_p1->vertices.push_back(p);	//Coloca os vertices no vetor
+      dcel_p1->pontos.push_back(p);	//Coloca os vertices no vetor
     };
 
 		#ifdef DEBUG
 		cout<<"Vertices Lidos:\n";
-    for(ponto_3d x : dcel_p1->vertices){ cout << x; }
+    for(ponto_3d x : dcel_p1->pontos){ cout << x; }
 		#endif
 
 		//descarta o fim da ultima linha, vamos ver linha inteiras daqui pra frente
@@ -59,7 +59,7 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
 
 			//Insere o numero do vertice na lista da face
 			while(ss >> nv){
-				face_atual.push_back(nv);
+				face_atual.push_back(nv - 1); //Ajustar a posicao com o indice
 			}
 
 			//Insere a face no vetor de faces do descritor da dcel do poliedro 
@@ -81,7 +81,7 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
 int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
 	
 	//Descritor da DCEL nao faz sentido
-	if(dcel->vertices.size() == 0 || dcel->faces.size() == 0)
+	if(dcel->pontos.size() == 0 || dcel->faces.size() == 0)
 		return 1;
 	
 	//gera um stream com o arquivo para escrever
@@ -89,10 +89,10 @@ int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
 	if (arquivo.is_open()){
 		
 		//Escreve a primeira linha
-		arquivo<<static_cast<int>(dcel->vertices.size())<<" "<<static_cast<int>(dcel->faces.size())<<"\n";
+		arquivo<<static_cast<int>(dcel->pontos.size())<<" "<<static_cast<int>(dcel->faces.size())<<"\n";
 		
 		//Escreve cada coordenada em ordem
-		for(ponto_3d p : dcel->vertices){
+		for(ponto_3d p : dcel->pontos){
 			arquivo<<p<<"\n";
 		}
 		
