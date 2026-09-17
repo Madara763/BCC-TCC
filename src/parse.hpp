@@ -11,12 +11,19 @@ Data: 15/09/2026
 #include "dcel.hpp"
 #include <string>
 
+//========================================
+// Defines dos tipos
+//========================================
 
 struct parametros {
 	std::string arq_entrada1;
   std::string arq_entrada2;
 	std::string arq_saida;
 };
+
+//========================================
+// Defines das Funcoes
+//========================================
 
 //Recebe o nome de um arquivo de texto contendo a malha da DCEL 
 //Le o arquivo e gera um descritor da DCEL

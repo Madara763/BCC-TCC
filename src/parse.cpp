@@ -9,7 +9,6 @@ Data: 15/09/2026
 
 #include <fstream>
 #include <sstream>
-
 #include <iostream>
 
 
@@ -99,7 +98,7 @@ int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
 		
 		#ifdef DEBUG
 		//Escreve a ordem dos vertices de cada face NA TELA
-		for(int i = 0; i< dcel->faces.size(); i++){
+		for(size_t i = 0; i< dcel->faces.size(); i++){
 			std::cout<<"I vale -> "<<i<<"\n";
 			for(uint64_t j=0; j< dcel->faces[i].size(); j++ ){
 				std::cout<<dcel->faces[i][j]<<" ";

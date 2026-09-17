@@ -8,11 +8,8 @@ Data: 15/09/2026
 
 #include <cerrno>
 #include <cstdio>
-
 #include <string>
 #include <vector>
-
-
 #include <iostream>
 
 #include "parse.hpp"
@@ -59,11 +56,14 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-
+	delete(poliedro1);
+	delete(poliedro2);
 
 	return 0;
 }
 
+
+//Funcao auxiliar para validar os parametros da main
 bool validar_parametros( int argc, char* argv[], parametros& params) {
 	// Nenhum parâmetro
 	if(argc < 2) {

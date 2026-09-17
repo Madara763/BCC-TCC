@@ -13,6 +13,10 @@ Data: 15/09/2026
 
 using namespace std; //Para simplificar o uso da stl
 
+//========================================
+// Defines dos tipos
+//========================================
+
 //Estrutura gerada ao ler os arquivos com as malhas
 //Usado para gerar a DCEL
 //Nao precisa de destrutor explicito
@@ -22,6 +26,9 @@ struct descritor_dcel{
 };
 
 
+//========================================
+// Defines das Funcoes
+//========================================
 
 
 

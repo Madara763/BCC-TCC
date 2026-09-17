@@ -10,6 +10,7 @@ Data: 15/09/2026
 #include <vector>
 #include <cstdint>
 #include <ostream>
+#include <limits>
 
 using namespace std; //Para simplificar o uso da stl
 
@@ -18,60 +19,57 @@ using namespace std; //Para simplificar o uso da stl
 //========================================
 
 //Alterar o tipo confome implementacao
-#define t_ponto double 
+#define t_coord double 
 const double EPS = 1E-9;
-
+constexpr size_t INVALID_INDEX = numeric_limits<size_t>::max();
 
 typedef struct{
-  t_ponto x{0.0}, y{0.0};
+  t_coord x{0.0}, y{0.0};
 } ponto_2d;
 
 typedef struct{
-  t_ponto x{0.0}, y{0.0}, z{0.0};
+  t_coord x{0.0}, y{0.0}, z{0.0};
 } ponto_3d;
 
-typedef struct {
+typedef struct{
+  ponto_3d pos;
+  size_t sa_incidente{INVALID_INDEX}; //Indice de uma semiaresta que inicia nesse vertice
+} vertice_3d;
+
+typedef struct{
   ponto_2d ini;
   ponto_2d fim;
 } aresta_2d;
 
-typedef struct {
-  ponto_3d ini;
-  ponto_3d fim;
+typedef struct{
+  vertice_3d ini; 
+  vertice_3d fim;
 } aresta_3d;
 
-typedef struct {
-  //lista de arestas que delimitam o semiespaco da face
-  //Guarda os indices das semiarestas da face no mapa_
-  vector<uint64_t> borda; 
-  t_ponto n1{0.0}, n2{0.0}, n3{0.0}; //coord do vetor normal da face
+typedef struct{
+  //Guarda o indice da semiaresta inicial
+  size_t ind_sa_inicial{INVALID_INDEX};
+  t_coord n1{0.0}, n2{0.0}, n3{0.0}; //coord do vetor normal da face
+  t_coord d{0.0}; //Constante da eq do plano
 } face;
 
-struct semi_aresta{
-
-  static uint64_t proximo_id; //contador global para o id 
-
-  uint64_t id; //identificador unico da semiaresta
+typedef struct{
 
   //Para identificar vertices e faces
-  uint64_t ind_vertice;   // indice/chave do mapa_vert da DCEL
-  uint64_t ind_face;      // indice/chave da mapa_face da DCEL
-
+  size_t ind_vertice{INVALID_INDEX};   // indice/chave do mapa_vert da DCEL
+  size_t ind_face{INVALID_INDEX};      // indice/chave da mapa_face da DCEL
+ 
   //Indice/Chave das semiarestas no mapa_sa da DCEL
-  uint64_t prox{0}; //next ptr
-  uint64_t ante{0}; //previous prt
-  uint64_t par{0};  //twin
-  
-  // Construtor
-  semi_aresta() : id(proximo_id++) {} // cada instância recebe um ID unico
-
-};
+  size_t prox{INVALID_INDEX}; //next ptr
+  size_t ante{INVALID_INDEX}; //previous prt
+  size_t par{INVALID_INDEX};  //twin
+}semi_aresta;
 
 struct dcel{
 
   //Armazena todos os vertices do poliedro
   //Mantem a mesma relacao ponto/indice do descritor
-  std::vector<ponto_3d> mapa_vertices;
+  std::vector<vertice_3d> mapa_vertices;
 
   //Armazena todas as faces do poliedro
   //Mantem a mesma relacao ponto/indice do descritor
@@ -83,7 +81,7 @@ struct dcel{
 
   //Criar metodos para acesso direto 
 
-}
+};
 
 
 //========================================
@@ -109,10 +107,6 @@ inline std::ostream& operator<<(std::ostream& os, const ponto_3d& p) {
   #endif
   return os;
 }
-
-//========================================
-// Defines das Funcoes
-//========================================
 
 
 #endif
