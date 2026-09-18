@@ -59,11 +59,16 @@ int main(int argc, char** argv) {
 	//===============Gera a DCEl a partir dos descritores===============
 
 	dcel_t* d1 = cria_dcel(poliedro1);
+	dcel_t* d2 = cria_dcel(poliedro2);
 
 	cout<<*d1;
 
+	debug_dcel_metodo_face(d1);
+	debug_dcel_metodo_vertex(d1);
+
 	//Libera memoria
 	delete(d1);
+	delete(d2);
 	delete(poliedro1);
 	delete(poliedro2);
 

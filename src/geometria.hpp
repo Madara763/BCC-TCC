@@ -11,6 +11,7 @@ Data: 15/09/2026
 #include <cstdint>
 #include <ostream>
 #include <limits>
+#include <cmath>
 
 using namespace std; //Para simplificar o uso da stl
 

@@ -9,7 +9,8 @@ Data: 15/09/2026
 #include "geometria.hpp"
 
 #include <unordered_map>
-#include <vector>
+
+//para debug
 #include <iostream>
 
 
@@ -50,28 +51,17 @@ inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
 
   os << "\n";
   os << "========== DCEL ==========\n\n";
-
-
-  // ==========================================================
-  // VERTICES
-  // ==========================================================
-
   os << "VERTICES\n";
 
   for (size_t i = 0; i < dcel.mapa_vertices.size(); ++i)
   {
     const vertice_3d_t& v = dcel.mapa_vertices[i];
-
     os << "[" << i << "] ";
     os << "ponto=("<< v.pos.x << ", "<< v.pos.y << ", "<< v.pos.z << ")";
     os << "\n";
   }
 
   os << "\n";
-  // ==========================================================
-  // FACES
-  // ==========================================================
-
   os << "FACES\n";
 
   for (size_t i = 0; i < dcel.mapa_faces.size(); ++i)
@@ -92,12 +82,6 @@ inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
   }
 
   os << "\n";
-
-
-  // ==========================================================
-  // SEMI-ARESTAS
-  // ==========================================================
-
   os << "SEMI-ARESTAS\n";
 
   for (size_t i = 0; i < dcel.mapa_sa.size(); ++i)
@@ -156,9 +140,13 @@ inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
 //Cria uma dcel a partir do descritor
 dcel_t* cria_dcel(descritor_dcel* descritor);
 
+//Recebe uma face com seus vertices e semi-arestas corretos
+//Calcula a equacao do plano preenchendo a propria face
+void calcula_eq_plano_face(dcel_t* d, face_t& face_nova);
+
 //Metodos do artigo
 
-//Retorna as meia arestas que saem do vertice, em anti-horario
+//Retorna as semi-arestas que saem do vertice, em anti-horario
 std::vector<size_t> vertex(const dcel_t& d, size_t ind_vertice);
 
 //Retorna as meia arestas que limitam a face
@@ -168,5 +156,15 @@ std::vector<size_t> face(const dcel_t& d, size_t ind_face);
 //Os vertices nao possuem indice da semi-aresta incidente
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
 
+
+//========================================
+//Define funcoes de debug
+//========================================
+
+//Funcao para testar e imprimir o contorno de todas as faces
+void debug_dcel_metodo_face(const dcel_t* d);
+
+//Funcao para testar e imprimir as arestas incidentes de cada vertice
+void debug_dcel_metodo_vertex(const dcel_t* d);
 
 #endif
