@@ -296,12 +296,53 @@ std::vector<size_t> face(const dcel_t& d, size_t ind_face){
 	return contorno;
 }
 
+//Obtem o vertice onde a semi-aresta acaba
+//O inicio da proxima, ou o inicio da twin
+inline size_t get_destino(const dcel_t& d, size_t ind_sa){
+  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_vertice;
+}
+
+//Obtem o indice da face a direita
+//Como cada semi-aresta guarda a face a esquerda
+//Retorna a face a esquerda do twin da semi-aresta
+inline size_t get_face_direita(const dcel_t& d, size_t ind_sa){
+  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_face;
+}
+
+//Retorna os vertices do contorno da face
+std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa){
+  
+  std::vector<size_t> contorno{face(d, ind_fa)};
+  
+  std::vector<size_t> vertices_contorno;
+
+  for(size_t ind_sa_contorno : contorno){
+    vertices_contorno.push_back(d.mapa_sa[ind_sa_contorno].ind_vertice);
+  }
+
+  return vertices_contorno;
+}
+
+//Retorna true se a face eh triangular
+bool eh_face_triangular(const dcel_t& d, size_t ind_face){
+
+  //Pega o vetor de semiarestas do contorno da face
+  std::vector<size_t> contorno{face(d, ind_face)};
+
+  //Contorno.size tem a quantidade de sa da face
+  //Cada sa inicia em um vertice da face entao tem a quantidade de vertices
+  //Se for 3, retorna q eh triangulo
+  if(contorno.size() == 3)
+    return true;
+
+  return false;
+}
+
 
 
 //========================================
 //Define funcoes de debug
 //========================================
-
 
 // Funcao para testar e imprimir o contorno de todas as faces
 void debug_dcel_metodo_face(const dcel_t* d) {

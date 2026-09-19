@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	dcel_t* d1 = cria_dcel(poliedro1);
 	dcel_t* d2 = cria_dcel(poliedro2);
 
-	cout<<*d1;
+	cout<<*d1;	
 
 	debug_dcel_metodo_face(d1);
 	debug_dcel_metodo_vertex(d1);

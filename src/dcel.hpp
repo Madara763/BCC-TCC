@@ -152,6 +152,22 @@ std::vector<size_t> vertex(const dcel_t& d, size_t ind_vertice);
 //Retorna as meia arestas que limitam a face
 std::vector<size_t> face(const dcel_t& d, size_t ind_face);
 
+//Obtem o vertice onde a semi-aresta acaba
+//O inicio da proxima, ou o inicio da twin
+inline size_t get_destino(const dcel_t& d, size_t ind_sa);
+
+//Obtem o indice da face a direita
+//Como cada semi-aresta guarda a face a esquerda
+//Retorna a face a esquerda do twin da semi-aresta
+inline size_t get_face_direita(const dcel_t& d, size_t ind_sa);
+
+//Retorna os vertices do contorno da face
+std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa);
+
+//Retorna true se a face eh triangular
+bool eh_face_triangular(const dcel_t& d, size_t ind_face);
+
+
 //Copia o vetor de pontos do descritor para o vetor de vertices da DCEL
 //Os vertices nao possuem indice da semi-aresta incidente
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
