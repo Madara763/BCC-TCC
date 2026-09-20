@@ -14,6 +14,7 @@ Data: 15/09/2026
 
 #include "parse.hpp"
 #include "dcel.hpp"
+#include "fitcp.hpp"
 #include "mensagens.hpp"
 
 

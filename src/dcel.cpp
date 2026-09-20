@@ -1,5 +1,5 @@
 /*
-Essa biblioteca contem funcoes para implementar por completo a estrutura da Doubly Connected Edge List
+Essa biblioteca contem funcoes para implementar por completo a estrutura da Doubly Connected Edge List de muller e preparata(1978)
 Criado por: Davi Lazzarin 
 Data: 15/09/2026
 */
