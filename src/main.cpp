@@ -37,11 +37,6 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	if(imprime_dcel_no_arquivo(param.arq_saida, poliedro1)){
-		msg_erro_escrever_arquivo(param.arq_saida);
-		return 1;
-	}
-
 	// Le a entrada e gera os vetores de vertices e faces para gerar a dcel do segundo arquivo
 	descritor_dcel* poliedro2 = processa_arq_entrada(param.arq_entrada2);
   
@@ -51,20 +46,17 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	if(imprime_dcel_no_arquivo(param.arq_saida, poliedro2)){
-		msg_erro_escrever_arquivo(param.arq_saida);
-		return 1;
-	}
-
 	//===============Gera a DCEl a partir dos descritores===============
 
 	dcel_t* d1 = cria_dcel(poliedro1);
 	dcel_t* d2 = cria_dcel(poliedro2);
 
-	cout<<*d1;	
+	//cout<<*d1;	
 
-	debug_dcel_metodo_face(d1);
-	debug_dcel_metodo_vertex(d1);
+	debug_triangula_e_valida_dcel(d1);
+
+	//cout<<*d1;	
+	
 
 	//Libera memoria
 	delete(d1);

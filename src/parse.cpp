@@ -78,7 +78,7 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
 //Recebe um nome de arquivo e um descritor da DCEL
 //Imprime um descritor da DCEL no arquivo 
 //Retorna 0 se deu certo, e 1 se houve algum erro
-int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
+int imprime_descritor_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
 	
 	//Descritor da DCEL nao faz sentido
 	if(dcel->pontos.size() == 0 || dcel->faces.size() == 0)
@@ -121,4 +121,62 @@ int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel){
 	}
 
 	return 0;
+}
+
+// Recebe o nome de um arquivo de saida e um ponteiro para uma dcel_t
+// Imprime a DCEL no arquivo no mesmo formato do arquivo de entrada
+// Retorna 0 se deu certo, e 1 se houve erro ao abrir/escrever
+int imprime_dcel_no_arquivo(std::string nome_arq, const dcel_t* d) {
+	if(d == nullptr || d->mapa_vertices.empty() || d->mapa_faces.empty()) {
+		return 1;
+	}
+
+	std::ofstream arquivo(nome_arq);
+	if(!arquivo.is_open()) {
+		return 1;
+	}
+
+	//Escreve a primeira linha: <num_vertices> <num_faces>
+	arquivo << d->mapa_vertices.size() << " " << d->mapa_faces.size() << "\n";
+
+	//escreve cada vertice (x, y, z)
+	for(const auto& v : d->mapa_vertices) {
+		arquivo << v.pos.x << " " << v.pos.y << " " << v.pos.z << "\n";
+	}
+
+	//Escreve os indices dos vertices de cada face 
+	for(size_t i = 0; i < d->mapa_faces.size(); ++i) {
+		std::vector<size_t> verts_face = get_vertices_face(*d, i);
+		for(size_t j = 0; j < verts_face.size(); ++j) {
+			arquivo << (verts_face[j] + 1) << (j + 1 == verts_face.size() ? "" : " ");
+		}
+		arquivo << "\n";
+	}
+
+	arquivo.close();
+	return 0;
+}
+
+// Sobrecarga para imprimir a dcel_t diretamente em std::ostream 
+void imprime_dcel_formatada(std::ostream& os, const dcel_t* d) {
+	if(d == nullptr || d->mapa_vertices.empty() || d->mapa_faces.empty()) {
+		return;
+	}
+
+	//Escreve a primeira linha: <num_vertices> <num_faces>
+	os << d->mapa_vertices.size() << " " << d->mapa_faces.size() << "\n";
+
+	//Escreve cada vertice (x, y, z)
+	for(const auto& v : d->mapa_vertices) {
+		os << v.pos.x << " " << v.pos.y << " " << v.pos.z << "\n";
+	}
+
+	//Escreve os indices dos vertices de cada face 
+	for(size_t i = 0; i < d->mapa_faces.size(); ++i) {
+		std::vector<size_t> verts_face = get_vertices_face(*d, i);
+		for(size_t j = 0; j < verts_face.size(); ++j) {
+			os << (verts_face[j] + 1) << (j + 1 == verts_face.size() ? "" : " ");
+		}
+		os << "\n";
+	}
 }

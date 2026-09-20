@@ -33,7 +33,12 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq);
 //Recebe um nome de arquivo e um descritor da DCEL
 //Imprime um descritor da DCEL no arquivo 
 //Retorna 0 se deu certo, e 1 se houve algum erro
-int imprime_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel);
+int imprime_descritor_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel);
 
+//Imprime a dcel_t em um arquivo com a formatacao padrao de entrada
+int imprime_dcel_no_arquivo(std::string nome_arq, const dcel_t* d);
+
+//Imprime a dcel_t na tela/stream com a formatacao padrao de entrada 
+void imprime_dcel_formatada(std::ostream& os, const dcel_t* d);
 
 #endif

@@ -167,11 +167,29 @@ std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa);
 //Retorna true se a face eh triangular
 bool eh_face_triangular(const dcel_t& d, size_t ind_face);
 
+//Recebe uma sa, verifica se a sua face correspondente eh triangular
+//Se nao for, cria uma sa que seguira a relacao de sa.prox.prox.prox == sa
+//Com isso a face de sa vira um triangulo
+//Cria uma face nova que sera associada ao restante do contorno da face original
+//Retorna o indice da face antrior a sa, ou a sa.prox.prox 
+//Caso a face ja seja um trinagulo retorna sa.ante
+//Caso haja algum problema com os pronteiros, retorna INVALID_INDEX
+size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira);
 
 //Copia o vetor de pontos do descritor para o vetor de vertices da DCEL
 //Os vertices nao possuem indice da semi-aresta incidente
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
 
+
+//========================================
+//Essas duas funceos de triangulacao sao usadas principalmente para dbug
+//========================================
+
+//Triangula uma face ate q ela fique com 3 vertices
+void triangula_face_completa(dcel_t& d, size_t ind_face);
+
+//Triangula todas as faces de um poliedro contido na DCEL
+void triangula_dcel_completa(dcel_t* d);
 
 //========================================
 //Define funcoes de debug
@@ -183,4 +201,6 @@ void debug_dcel_metodo_face(const dcel_t* d);
 //Funcao para testar e imprimir as arestas incidentes de cada vertice
 void debug_dcel_metodo_vertex(const dcel_t* d);
 
+//Triangula a DCEL inteira, exibe na TELA informacoes sobre a DCEL
+void debug_triangula_e_valida_dcel(dcel_t* d);
 #endif

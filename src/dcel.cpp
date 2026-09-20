@@ -338,7 +338,135 @@ bool eh_face_triangular(const dcel_t& d, size_t ind_face){
   return false;
 }
 
+//Recebe uma sa, verifica se a sua face correspondente eh triangular
+//Se nao for, cria uma sa que seguira a relacao de sa.prox.prox.prox == sa
+//Com isso a cria uma nova face triangular de sa 
+//Mantem f1 associada ao restante do contorno
+//Retorna o indice da face antrior a sa, ou a sa.prox.prox 
+//Caso a face ja seja um trinagulo retorna sa.ante
+//Caso haja algum problema com os pronteiros, retorna INVALID_INDEX
+size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira){
 
+  //==========VERIFICACOES INICIAIS==========
+	//Valida a semi-aresta e sua face estao nos limites da dcel
+	if(sa_primeira >= d.mapa_sa.size()) {return INVALID_INDEX;}
+	size_t f1 = d.mapa_sa[sa_primeira].ind_face;
+	if(f1 == INVALID_INDEX || f1 >= d.mapa_faces.size()){return INVALID_INDEX;}
+
+  //Verifica se ja eh triangular, retorna a anterior a sa_primeira(que seria a sa_nova)
+  if(eh_face_triangular(d, f1)){return (d.mapa_sa[sa_primeira].ante);}
+
+	//Obtem e_a'' (sa_segunda) e e_a''' (sa_terceira) seguindo a sequencia da face 
+	size_t sa_segunda = d.mapa_sa[sa_primeira].prox;  // e_a''
+	if(sa_segunda == INVALID_INDEX || sa_segunda >= d.mapa_sa.size()) {return INVALID_INDEX;}
+
+	size_t sa_terceira = d.mapa_sa[sa_segunda].prox;  // e_a'''
+	if(sa_terceira == INVALID_INDEX || sa_terceira >= d.mapa_sa.size()){return INVALID_INDEX;}
+
+
+  //==========SALVA OS INDICES DOS VERTICES E DAS SA QUE SERAO ALTERADOS==========
+
+	//Salva os vertices dos extremos nao sobrepostos de e_a'' e e_a'
+	//v0 -> vertice de origem de e_a' 
+	//v2 -> vertice final de e_a'' (que é a origem de e_a''') 
+  //v0 -> v1 -> v2
+	size_t v0 = d.mapa_sa[sa_primeira].ind_vertice;
+	size_t v2 = d.mapa_sa[sa_terceira].ind_vertice;
+
+	size_t sa_anterior = d.mapa_sa[sa_primeira].ante; //semi-aresta que vem antes da inicial
+
+	//indices reservadaos para as novas semi-arestas e para a nova face
+	size_t ind_sa_nova = d.mapa_sa.size();
+	size_t ind_sa_nova_par = ind_sa_nova + 1; //Se alterar a ordem de insercao das sa tem q alterar aqui tbm
+	size_t ind_face_nova = d.mapa_faces.size();
+
+  //==========INICIA A CRIACAO DA FACE==========
+
+	//Aloca a nova face f_nova, copiando a equação do plano de f1
+	face_t f_nova;
+	f_nova.ind_sa_inicial = sa_primeira; //f_nova fica associada ao triangulo criado
+	f_nova.n1 = d.mapa_faces[f1].n1;
+	f_nova.n2 = d.mapa_faces[f1].n2;
+	f_nova.n3 = d.mapa_faces[f1].n3;
+	f_nova.d = d.mapa_faces[f1].d;
+	d.mapa_faces.push_back(f_nova);
+
+	//f1 fica associada ao resto do contorno(ja esta )
+	d.mapa_faces[f1].ind_sa_inicial = sa_anterior;
+
+  /*
+  f1 que ja existe fica associada a sa_anterior que ja existe
+  enquanto a nova face fica associada a sa_primeira que sera triangularizada
+  Faz isso para manter o tempo constante das alteracoes
+  */
+  
+  //==========INICIA A CRIACAO DAS SEMI-ARESTAS==========
+	//cria as duas novas sa, uma eh par da outra
+	semi_aresta_t sa_nova;      // Conecta v2 -> v0 (fecha o triangulo na face f_nova)
+	semi_aresta_t sa_nova_par;  // Conecta v0 -> v2 (fecha o poligono restante na face f1)
+
+	sa_nova.ind_vertice = v2;
+	sa_nova.ind_face = ind_face_nova;
+	sa_nova.ante = sa_segunda;
+	sa_nova.prox = sa_primeira;
+	sa_nova.par = ind_sa_nova_par;
+
+	sa_nova_par.ind_vertice = v0;
+	sa_nova_par.ind_face = f1;
+	sa_nova_par.ante = sa_anterior;
+	sa_nova_par.prox = sa_terceira;
+	sa_nova_par.par = ind_sa_nova;
+
+  //==========AJUSTA A RALACAO COM AS SA EXISTENTES==========
+	//Fecha o ciclo do triangulo em f_nova: sa_segunda -> sa_nova -> sa_primeira -> sa_segunda
+	d.mapa_sa[sa_segunda].prox = ind_sa_nova;
+	d.mapa_sa[sa_primeira].ante = ind_sa_nova;
+
+	//Atualiza o ciclo do contorno restante em f1: sa1_ante -> sa_nova_par -> sa_terceira 
+	d.mapa_sa[sa_anterior].prox = ind_sa_nova_par;
+	d.mapa_sa[sa_terceira].ante = ind_sa_nova_par;
+
+  //Ajusta para que o trinagulo aponte para a face nova
+  d.mapa_sa[sa_primeira].ind_face = ind_face_nova;
+  d.mapa_sa[sa_segunda].ind_face = ind_face_nova;
+
+	//Adiciona as semi-arestas no vetor de semi-arestas da DCEL
+  //Manter a mesma ordem de onde tem esse comentario -> //indices reservadaos para as novas semi-arestas e para a nova face
+	d.mapa_sa.push_back(sa_nova);
+	d.mapa_sa.push_back(sa_nova_par);
+
+	return ind_sa_nova;
+}
+
+//========================================
+//Essas duas funceos de triangulacao sao usadas principalmente para dbug
+//========================================
+
+//Triangula uma face ate q ela fique com 3 vertices
+void triangula_face_completa(dcel_t& d, size_t ind_face) {
+	if(ind_face >= d.mapa_faces.size()) return;
+
+	//Enquanto a face nao for triangular, recorta um triangulo por vez
+	while(!eh_face_triangular(d, ind_face)) {
+		size_t sa_inicio = d.mapa_faces[ind_face].ind_sa_inicial;
+		size_t res = triangula_face_local_mp(d, sa_inicio);
+
+		//Se retornar INVALID_INDEX, a face eh triangular ou houve falha
+		if(res == INVALID_INDEX) break;
+	}
+}
+
+//Triangula todas as faces de um poliedro contido na DCEL
+void triangula_dcel_completa(dcel_t* d) {
+	if(d == nullptr) return;
+
+	//Salva o numero de faces originais
+	size_t num_faces_originais = d->mapa_faces.size();
+
+	for(size_t i = 0; i < num_faces_originais; ++i) {
+		triangula_face_completa(*d, i);
+	}
+}
 
 //========================================
 //Define funcoes de debug
@@ -379,9 +507,7 @@ void debug_dcel_metodo_vertex(const dcel_t* d) {
 	// Itera por todos os vertices da malha
 	for(size_t i = 0; i < d->mapa_vertices.size(); ++i) {
 		std::cout << "Vertice [" << i << "] (";
-		std::cout << d->mapa_vertices[i].pos.x << ", "
-		          << d->mapa_vertices[i].pos.y << ", "
-		          << d->mapa_vertices[i].pos.z << "): ";
+		std::cout << d->mapa_vertices[i].pos.x << ", "<< d->mapa_vertices[i].pos.y << ", "<< d->mapa_vertices[i].pos.z << "): ";
 
 		// Chama a funcao que gira em torno do vertice
 		std::vector<size_t> incidentes = vertex(*d, i);
@@ -403,4 +529,34 @@ void debug_dcel_metodo_vertex(const dcel_t* d) {
 		std::cout << "]\n";
 	}
 	std::cout << "============================================\n";
+}
+
+//Triangula a DCEL inteira, exibe na TELA informacoes sobre a DCEL
+void debug_triangula_e_valida_dcel(dcel_t* d) {
+	if(d == nullptr) {
+		std::cout << "\n[DEBUG] Ponteiro para DCEL nulo!\n";
+		return;
+	}
+
+	std::cout << "\n============================================\n";
+	std::cout << "  INICIANDO TRIANGULACAO COMPLETA DA DCEL\n";
+	std::cout << "============================================\n";
+	std::cout << "Estado Inicial:\n";
+	std::cout << " - Qtd de Vertices: " << d->mapa_vertices.size() << "\n";
+	std::cout << " - Qtd de Faces:    " << d->mapa_faces.size() << "\n";
+	std::cout << " - Qtd de SA:       " << d->mapa_sa.size() << "\n\n";
+
+	//Executa a triangulacao total
+	triangula_dcel_completa(d);
+
+	std::cout << "Estado Apos Triangulacao:\n";
+	std::cout << " - Qtd de Vertices: " << d->mapa_vertices.size() << "\n";
+	std::cout << " - Qtd de Faces:    " << d->mapa_faces.size() << "\n";
+	std::cout << " - Qtd de SA:       " << d->mapa_sa.size() << "\n";
+	std::cout << "============================================\n";
+
+	//Executa as verificacoes topologicas de face e vertice
+	std::cout << "\n>>> IMPRIMINDO ESTRUTURA APOS TRIANGULACAO <<<\n";
+	debug_dcel_metodo_face(d);
+	debug_dcel_metodo_vertex(d);
 }
