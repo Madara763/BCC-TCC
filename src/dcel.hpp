@@ -13,7 +13,6 @@ Data: 15/09/2026
 //para debug
 #include <iostream>
 
-
 //========================================
 // Defines dos tipos
 //========================================
@@ -23,7 +22,7 @@ Data: 15/09/2026
 //Nao precisa de destrutor explicito
 struct descritor_dcel{
   std::vector<ponto_3d> pontos;
-  std::vector<vector<uint64_t>> faces;
+  std::vector<std::vector<uint64_t>> faces;
 };
 
 struct dcel_t{
@@ -45,7 +44,6 @@ struct dcel_t{
 //========================================
 // Sobrecarga impressao da DCEL - PARA DEBUG
 //========================================
-
 
 inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
 
@@ -132,7 +130,6 @@ inline std::ostream& operator<<(std::ostream& os, const dcel_t& dcel){
   return os;
 }
 
-
 //========================================
 // Defines das Funcoes
 //========================================
@@ -154,12 +151,16 @@ std::vector<size_t> face(const dcel_t& d, size_t ind_face);
 
 //Obtem o vertice onde a semi-aresta acaba
 //O inicio da proxima, ou o inicio da twin
-inline size_t get_destino(const dcel_t& d, size_t ind_sa);
+inline size_t get_destino(const dcel_t& d, size_t ind_sa){
+  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_vertice;
+}
 
 //Obtem o indice da face a direita
 //Como cada semi-aresta guarda a face a esquerda
 //Retorna a face a esquerda do twin da semi-aresta
-inline size_t get_face_direita(const dcel_t& d, size_t ind_sa);
+inline size_t get_face_direita(const dcel_t& d, size_t ind_sa){
+  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_face;
+}
 
 //Retorna os vertices do contorno da face
 std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa);
@@ -179,7 +180,6 @@ size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira);
 //Copia o vetor de pontos do descritor para o vetor de vertices da DCEL
 //Os vertices nao possuem indice da semi-aresta incidente
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
-
 
 //========================================
 //Essas duas funceos de triangulacao sao usadas principalmente para dbug

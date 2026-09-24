@@ -296,19 +296,6 @@ std::vector<size_t> face(const dcel_t& d, size_t ind_face){
 	return contorno;
 }
 
-//Obtem o vertice onde a semi-aresta acaba
-//O inicio da proxima, ou o inicio da twin
-inline size_t get_destino(const dcel_t& d, size_t ind_sa){
-  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_vertice;
-}
-
-//Obtem o indice da face a direita
-//Como cada semi-aresta guarda a face a esquerda
-//Retorna a face a esquerda do twin da semi-aresta
-inline size_t get_face_direita(const dcel_t& d, size_t ind_sa){
-  return d.mapa_sa[d.mapa_sa[ind_sa].par].ind_face;
-}
-
 //Retorna os vertices do contorno da face
 std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa){
   

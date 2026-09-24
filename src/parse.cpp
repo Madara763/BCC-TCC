@@ -40,8 +40,8 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
     };
 
 		#ifdef DEBUG
-		cout<<"Vertices Lidos:\n";
-    for(ponto_3d x : dcel_p1->pontos){ cout << x; }
+		std::cout<<"Vertices Lidos:\n";
+    for(ponto_3d x : dcel_p1->pontos){ std::cout << x; }
 		#endif
 
 		//descarta o fim da ultima linha, vamos ver linha inteiras daqui pra frente
@@ -52,10 +52,10 @@ descritor_dcel* processa_arq_entrada(std::string nome_arq){
 
 			//Le a linha contendo a sequancia de vertices da face
 			getline(arquivo, linha);
-      istringstream ss(linha);
+      std::istringstream ss(linha);
 
 			//Aloca o vetor da face atual
-			vector<uint64_t> face_atual;
+			std::vector<uint64_t> face_atual;
 
 			//Insere o numero do vertice na lista da face
 			while(ss >> nv){
@@ -109,7 +109,7 @@ int imprime_descritor_dcel_no_arquivo(std::string nome_arq, descritor_dcel* dcel
 
 
 		//Escreve a ordem dos vertices de cada face
-		for(vector<uint64_t> v : dcel->faces){
+		for(std::vector<uint64_t> v : dcel->faces){
 			for(uint64_t i : v){
 				arquivo<<i<<" ";
 			}

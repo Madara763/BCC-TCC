@@ -13,7 +13,7 @@ Data: 15/09/2026
 #include <limits>
 #include <cmath>
 
-using namespace std; //Para simplificar o uso da stl
+//using namespace std; //Para simplificar o uso da stl
 
 //========================================
 // Defines dos tipos
@@ -22,7 +22,7 @@ using namespace std; //Para simplificar o uso da stl
 //Alterar o tipo confome implementacao
 #define t_coord double 
 const double EPS = 1E-9;
-constexpr size_t INVALID_INDEX = numeric_limits<size_t>::max();
+constexpr size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
 typedef struct{
   t_coord x{0.0}, y{0.0};
@@ -41,6 +41,11 @@ typedef struct{
   ponto_2d ini;
   ponto_2d fim;
 } aresta_2d;
+
+typedef struct{
+  std::vector<ponto_2d> vertices;
+  std::vector<size_t> indices_originais; //Rastreia o vertice original da DCEL
+} poligono_2d_t;
 
 typedef struct{
   vertice_3d_t ini; 
