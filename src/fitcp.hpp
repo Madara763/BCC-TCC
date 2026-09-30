@@ -28,14 +28,14 @@ Data: 19/09/2026
 //Encontra o contorno de suporte vertical de um poliedro
 poligono_2d_t extrai_poligono_projecao(const dcel_t& d);
 
-//SERIA USADO NO SHAMOSHOEY, ATUALEMENTE SEM USO
+
 // Testa de que lado o ponto esta em relacao a uma linha
 // Produto vetorial 2D para determinar o lado da linha
 // Aqui consideramos que a navegacao eh sempre sem sentido anti-horario
 // Se o prod vetorial > 0 p esta dentro
 // Se o prod vetorial = 0 p esta na borda, em cima da aresta
 // Se o prod vetorial < 0 p esta fora
-//bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2);
+bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2);
 
 //Calcula a intersecao 2D dos poligonos projetados usando a biblioteca Clipper2.
 //Retorna um pair, indicando qual o poligono com o vertice na interseccao e qual o indice do vertice 
@@ -45,5 +45,12 @@ poligono_2d_t extrai_poligono_projecao(const dcel_t& d);
 //O pair devolvido tera o pirmeiro valor igual a 3, indicando que caiu nesse caso especial, o segundo campo sera 0,
 // e as coordenadas do ponto de cruzamento de aresta estara no terceiro parametro
 std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t& poligonoA, const poligono_2d_t& poligonoB, ponto_2d& p_estrela);
+
+//Calculo da PRE IMAGEM do ponto de interseccao encontrado na projecao 2D
+//Dispara um raio vertical a partir do ponto p (x,y) e encontra os furos na casca do poliedro
+//Retorna uma tupla, onde o primeiro booleano diz se sobreposicao das pre imagens e valida
+//O segundo pair contem respectivamente o limite superior e inferior do segmento de 
+// reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
+std::pair<bool,std::pair<size_t, size_t>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
 
 #endif

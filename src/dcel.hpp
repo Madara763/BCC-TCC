@@ -182,7 +182,7 @@ size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira);
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
 
 //========================================
-//Essas duas funceos de triangulacao sao usadas principalmente para dbug
+//Essas duas funcoes de triangulacao
 //========================================
 
 //Triangula uma face ate q ela fique com 3 vertices
@@ -191,16 +191,4 @@ void triangula_face_completa(dcel_t& d, size_t ind_face);
 //Triangula todas as faces de um poliedro contido na DCEL
 void triangula_dcel_completa(dcel_t* d);
 
-//========================================
-//Define funcoes de debug
-//========================================
-
-//Funcao para testar e imprimir o contorno de todas as faces
-void debug_dcel_metodo_face(const dcel_t* d);
-
-//Funcao para testar e imprimir as arestas incidentes de cada vertice
-void debug_dcel_metodo_vertex(const dcel_t* d);
-
-//Triangula a DCEL inteira, exibe na TELA informacoes sobre a DCEL
-void debug_triangula_e_valida_dcel(dcel_t* d);
 #endif

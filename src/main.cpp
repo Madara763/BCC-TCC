@@ -16,6 +16,7 @@ Data: 15/09/2026
 #include "dcel.hpp"
 #include "fitcp.hpp"
 #include "mensagens.hpp"
+#include "debug.hpp"
 
 
 using namespace std;
@@ -52,38 +53,14 @@ int main(int argc, char** argv) {
 	dcel_t* d1 = cria_dcel(poliedro1);
 	dcel_t* d2 = cria_dcel(poliedro2);
 	// cout<<*d1;
-	
-	//  1. Extrai os polígonos de projeção (suporte vertical) de ambos os poliedros
-	poligono_2d_t polyA = extrai_poligono_projecao(*d1);
-	poligono_2d_t polyB = extrai_poligono_projecao(*d2);
 
-	// 2. Variável para armazenar as coordenadas de saída
-	ponto_2d p_estrela;
+	poligono_2d_t polA = extrai_poligono_projecao(*d1);
+	poligono_2d_t polB = extrai_poligono_projecao(*d2);
 
-	// 3. Executa a interseção 2D com a Clipper2
-	std::pair<uint8_t, std::size_t> resultado = encontrar_ponto_p_estrela(polyA, polyB, p_estrela);
+	debug_teste_interseccao_2d(polA, polB);
 
-	// 4. Exibe os resultados no terminal
-	std::cout << "\n========== TESTE INTERSECCAO 2D (p*) ==========\n";
-	if(resultado.first == 0) {
-		std::cout << "Resultado: Poliedros separados. Interseccao nula.\n";
-	} else {
-		std::cout << "Resultado: Sobreposicao detectada!\n";
-		std::cout << "Coordenadas de p*: (" << p_estrela.x << ", " << p_estrela.y << ")\n";
-
-		switch(resultado.first) {
-		case 1:
-			std::cout << "Status: Coincide com o vertice [" << resultado.second << "] do Poliedro 1.\n";
-			break;
-		case 2:
-			std::cout << "Status: Coincide com o vertice [" << resultado.second << "] do Poliedro 2.\n";
-			break;
-		case 3:
-			std::cout << "Status: Novo cruzamento de arestas (ponto virtual sem coordenada Z definida).\n";
-			break;
-		}
-	}
-  std::cout << "===============================================\n\n";
+	ponto_2d p_istrela;
+	std::pair<uint8_t, std::size_t> par_saida_p_estrela = encontrar_ponto_p_estrela(polA, polB, p_istrela );
 	
 
 

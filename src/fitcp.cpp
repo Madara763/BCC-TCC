@@ -99,16 +99,16 @@ poligono_2d_t extrai_poligono_projecao(const dcel_t& d) {
 	return contorno;
 }
 
-// SERIA USADO NO SHAMOSHOEY, ATUALEMENTE SEM USO
-//  Testa de que lado o ponto esta em relacao a uma linha
-//  Produto vetorial 2D para determinar o lado da linha
-//  Aqui consideramos que a navegacao eh sempre sem sentido anti-horario
-//  Se o prod vetorial > 0 p esta dentro
-//  Se o prod vetorial = 0 p esta na borda, em cima da aresta
-//  Se o prod vetorial < 0 p esta fora
-//  bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2) {
-//  	return ( (p2.x - p1.x) * (p.y - p1.y) - (p2.y - p1.y) * (p.x - p1.x) >= -EPS);
-//  }
+
+//Testa de que lado o ponto esta em relacao a uma linha
+//Produto vetorial 2D para determinar o lado da linha
+//Aqui consideramos que a navegacao eh sempre sem sentido anti-horario
+//Se o prod vetorial > 0 p esta dentro
+//Se o prod vetorial = 0 p esta na borda, em cima da aresta
+//Se o prod vetorial < 0 p esta fora
+bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2) {
+	return ( (p2.x - p1.x) * (p.y - p1.y) - (p2.y - p1.y) * (p.x - p1.x) >= -EPS);
+}
 
 //==================================================
 // CALCULO DO PONTO P* VIA CLIPPER2
@@ -183,4 +183,26 @@ std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t& p
 	p_estrela.y = static_cast<t_coord>(solution[0][0].y) / CLIPPER_SCALE;
 
 	return {3, 0};
+}
+
+//==================================================
+// RAY CASTING -> PRE IMAGEM
+//==================================================
+
+//Calculo da PRE IMAGEM do ponto de interseccao encontrado na projecao 2D
+//Dispara um raio vertical a partir do ponto p (x,y) e encontra os furos na casca do poliedro
+//Retorna uma tupla, onde o primeiro booleano diz se sobreposicao das pre imagens e valida
+//O segundo pair contem respectivamente o limite superior e inferior do segmento de 
+// reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
+std::pair<bool,std::pair<size_t, size_t>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela){
+	/*Varre a dcel d1 e verifica as duas faces que sao cortadas pela reta vertical em Z que passa pelo ponto p*
+		Salva as duas faces
+		Varre a dcel d2 e verifica as duas faces que sao cortadas pela reta vertical em Z que passa pelo ponto p*
+		Salva as duas faces
+		As 4 faces sao "furadas" pela reta no eixo Z que passa por p*, esses furos estao na mesma reta
+		Entao ordenamos esses pontos no eixo Z
+		Se obtivermos uma ordem como p_inf_d1 <= p_inf_d2 < p_sup_d1 <= p_sup_d2 (olha a coord Z desses 4 pontos)
+		Isso significa que o segmento de reta que passa por p* e tem e eh delimitada por p_inf_d1 e p_sup_d2, esta garantidamente na intersccao dos poliedros d1 e d2
+	*/
+	
 }
