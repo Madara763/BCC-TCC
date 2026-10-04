@@ -51,6 +51,6 @@ std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t& p
 //Retorna uma tupla, onde o primeiro booleano diz se sobreposicao das pre imagens e valida
 //O segundo pair contem respectivamente o limite superior e inferior do segmento de 
 // reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
-std::pair<bool,std::pair<size_t, size_t>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
+std::pair<bool,std::pair<ponto_3d, ponto_3d>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
 
 #endif

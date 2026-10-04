@@ -95,7 +95,17 @@ inline std::ostream& operator<<(std::ostream& os, const ponto_3d& p) {
   return os;
 }
 
+//========================================
+// Operções basicas auxiliares
+//========================================
 
+inline double prod_escalar(const face_t& f, const ponto_3d& p){
+  return ((f.n1 *  p.x) + (f.n2 * p.y) + (f.n3 * p.z)); 
+}
+
+inline double prod_escalar(const ponto_3d& f, const ponto_3d& p){
+  return ((f.x *  p.x) + (f.y * p.y) + (f.z * p.z)); 
+}
 
 //========================================
 // Funcao hash para o unordered_map
