@@ -243,10 +243,9 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     double numerador = prod_escalar(d1->mapa_faces[i], vet_aux);
 
     // Se a reta for paralela ao plano da face
-    if (std::abs(denominador) < EPS)
-    {
+    if (std::abs(denominador) < EPS){
       //Se o numerador for positivo, a reta inteira está do lado de FORA deste plano
-			if (numerador > 0.0){
+			if (numerador > EPS){ //AQUI TEM UM ERRO DE PRECISAO EM ALGUNS CASOS
         return {false, {0.0, 0.0}}; 
       }
       continue; // Paralela do lado de dentro, continua testando as outras faces
@@ -254,7 +253,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
 
     double t = numerador / denominador;
 
-    if (denominador > 0.0){
+    if (denominador > EPS){
       // Reta e normal no mesmo sentido -> Ponto de ENTRADA
       if (t > amin){
         amin = t; // Estreita o limite de entrada
@@ -269,7 +268,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
 
     //Se o intervalo colapsar, a reta não passa por dentro do objeto
     //Passa na projeçao dos planos das faces
-    if (amin > amax){
+    if (amin > amax + EPS){
       return {false, {0.0, 0.0}};
     }
   } // iteracao dcel 1
@@ -301,6 +300,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     {
       //Se o numerador for positivo, a reta inteira está do lado de FORA deste plano
 			if (numerador > 0.0){
+        std::cout<<"GATPO";
         return {false, {0.0 , 0.0}}; 
       }
       continue; // Paralela do lado de dentro, continua testando as outras faces
@@ -323,7 +323,8 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
 
     //Se o intervalo colapsar, a reta não passa por dentro do objeto
     //Passa na projeçao dos planos das faces
-    if (bmin > bmax){
+    if (bmin > bmax + EPS){
+      std::cout<<"BOLA";
       return {false, {0.0 , 0.0}};
     }
   } // iteracao dcel 2
@@ -335,6 +336,8 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
   double t_entrada_comum = std::max(amin, bmin);
   double t_saida_comum   = std::min(amax, bmax);
 
+  std::cout<<"Amin: "<<amin<<"Amax: "<<amax<<"Bmin: "<<bmin<<"Bmax: "<<bmax<<"\n";
+
   // Se o ponto de entrada comum for maior que o de saida, não há sobreposição
   if (t_entrada_comum > t_saida_comum){
     return {false, {0.0 , 0.0}};
@@ -344,3 +347,47 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
   //Envia a coordenada no eixo Z 
   return {true, {(pz_raio.z + t_entrada_comum), (pz_raio.z + t_saida_comum)}};
 }
+
+//Encontra uma das arestas que geraram o vertice virtual par enconntrar o p*
+//Triangula as duas faces dessa aresta
+//Divide a aresta no meio, dividindo cada face em duas
+//Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
+std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2){
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
