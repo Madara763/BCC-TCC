@@ -55,7 +55,6 @@ int main(int argc, char **argv)
 
   dcel_t *d1 = cria_dcel(poliedro1);
   dcel_t *d2 = cria_dcel(poliedro2);
-  // cout<<*d1;
 
   poligono_2d_t polA = extrai_poligono_projecao(*d1);
   poligono_2d_t polB = extrai_poligono_projecao(*d2);
@@ -66,21 +65,22 @@ int main(int argc, char **argv)
   std::pair<uint8_t, std::size_t> par_saida_p_estrela = encontrar_ponto_p_estrela(polA, polB, p_istrela);
 
   if (par_saida_p_estrela.first == 1 || par_saida_p_estrela.first == 2){ // Vertice na interseccao 2D de A ou B
-    std::pair<bool, std::pair<ponto_3d, ponto_3d>> par_pre_img = intervalo_pre_img(d1, d2, p_istrela);
+    std::pair<bool, std::pair<double, double>> par_pre_img = intervalo_pre_img(d1, d2, p_istrela);
     if(par_pre_img.first){
       std::cout<<"Sobreposição da pré imagem válida.\n";
       std::cout<<"Ponto p* -> "<<p_istrela<<"\n";
-      std::cout<<"Segmento da pré imagem na intersecção de -> "<<par_pre_img.second.first<<" até "<<par_pre_img.second.second<<"\n";
+      std::cout<<"Segmento da pré imagem na intersecção de -> "<<p_istrela<<" "<<par_pre_img.second.first<<" até "<<p_istrela<<" "<<par_pre_img.second.second<<"\n";
     }
     else{
       std::cout<<"Sobreposição da pré imagem inválida.\n";
+      uint8_t pol_modificado = adiciona_vertice_virtual(polA, polB, d1, d2);
     }
   }
   else if (par_saida_p_estrela.first == 3){ // Vertice virtual
     std::cout<<"Sobreposição em 2D identificada em um vértice virtual.\n";
   }
   
-  // cout<<*d1;
+  imprime_dcel_formatada(cout, d1);
   // Libera memoria
   delete (d1);
   delete (d2);

@@ -26,6 +26,7 @@ Data: 19/09/2026
   Usaremos a Clipper2 de Angus Johnson
 */
 //Encontra o contorno de suporte vertical de um poliedro
+//Retorna o poligono 2D da projeção, e um vetor com os indices das semi arestas que foram projetadas
 poligono_2d_t extrai_poligono_projecao(const dcel_t& d);
 
 
@@ -46,11 +47,23 @@ bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2);
 // e as coordenadas do ponto de cruzamento de aresta estara no terceiro parametro
 std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t& poligonoA, const poligono_2d_t& poligonoB, ponto_2d& p_estrela);
 
+//Encontra uma das arestas que geraram o vertice virtual par enconntrar o p*
+//Triangula as duas faces dessa aresta
+//Divide a aresta no meio, dividindo cada face em duas
+//Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
+std::pair<uint8_t, size_t> adiciona_vertice_virtual(polA, polB, d1, d2);
+
+
+
+
+
+
+
 //Calculo da PRE IMAGEM do ponto de interseccao encontrado na projecao 2D
 //Dispara um raio vertical a partir do ponto p (x,y) e encontra os furos na casca do poliedro
 //Retorna uma tupla, onde o primeiro booleano diz se sobreposicao das pre imagens e valida
 //O segundo pair contem respectivamente o limite superior e inferior do segmento de 
 // reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
-std::pair<bool,std::pair<ponto_3d, ponto_3d>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
+std::pair<bool,std::pair<double, double>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
 
 #endif
