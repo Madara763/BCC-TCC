@@ -352,11 +352,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
 //Triangula as duas faces dessa aresta
 //Divide a aresta no meio, dividindo cada face em duas
 //Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
-std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2){
-
-
-
-}
+//std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2){}
 
 
 

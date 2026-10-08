@@ -42,22 +42,10 @@ bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2);
 //Retorna um pair, indicando qual o poligono com o vertice na interseccao e qual o indice do vertice 
 //Ex: Vertice em A "return {1, n}", Vertice em B "return {2, n}". Sendo N o indice do vertice do poligono_2d_t
 //Se a interseccao for nula, o pair retornado eh (0, 0)
-//CASO ESPECIAL: Quando houver interseccao, mas nenhum vertice de A* ou B* estiver na interseccao, um novo vertice tem que ser adicionado a DCEL
+//CASO ESPECIAL: Quando houver interseccao, mas nenhum vertice de A* ou B* estiver na interseccao
 //O pair devolvido tera o pirmeiro valor igual a 3, indicando que caiu nesse caso especial, o segundo campo sera 0,
 // e as coordenadas do ponto de cruzamento de aresta estara no terceiro parametro
 std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t& poligonoA, const poligono_2d_t& poligonoB, ponto_2d& p_estrela);
-
-//Encontra uma das arestas que geraram o vertice virtual par enconntrar o p*
-//Triangula as duas faces dessa aresta
-//Divide a aresta no meio, dividindo cada face em duas
-//Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
-std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2);
-
-
-
-
-
-
 
 //Calculo da PRE IMAGEM do ponto de interseccao encontrado na projecao 2D
 //Dispara um raio vertical a partir do ponto p (x,y) e encontra os furos na casca do poliedro
@@ -65,5 +53,11 @@ std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const po
 //O segundo pair contem respectivamente o limite superior e inferior do segmento de 
 // reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
 std::pair<bool,std::pair<double, double>> intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
+
+//Encontra uma das arestas que geraram o vertice virtual par enconntrar o p*
+//Triangula as duas faces dessa aresta
+//Divide a aresta no meio, dividindo cada face em duas
+//Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
+//std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2);
 
 #endif
