@@ -28,7 +28,7 @@ void debug_dcel_metodo_vertex(const dcel_t* d);
 void debug_triangula_e_valida_dcel(dcel_t* d);
 
 //Recebe as projecoes e imprime na tela se ha ou nao a interseccao e qual vertice corresponde ao p*
-void debug_teste_interseccao_2d(const poligono_2d_t& pol1, const poligono_2d_t& pol2);
+void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projecao_poligono_2d_t& pol2);
 
 
 #endif

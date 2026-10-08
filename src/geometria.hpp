@@ -43,11 +43,6 @@ typedef struct{
 } aresta_2d;
 
 typedef struct{
-  std::vector<ponto_2d> vertices;
-  std::vector<size_t> indices_originais; //Rastreia o vertice original da DCEL
-} poligono_2d_t;
-
-typedef struct{
   vertice_3d_t ini; 
   vertice_3d_t fim;
 } aresta_3d;
@@ -70,6 +65,7 @@ typedef struct{
   size_t ante{INVALID_INDEX}; //previous prt
   size_t par{INVALID_INDEX};  //twin
 }semi_aresta_t;
+
 
 //========================================
 // Sobrecargas para Impressao

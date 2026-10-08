@@ -23,7 +23,7 @@ using namespace std;
 bool validar_parametros(int argc, char *argv[], parametros &param);
 
 int main(int argc, char **argv)
-{
+{  
   parametros param;
 
   // Verificacao de parametros
@@ -35,8 +35,7 @@ int main(int argc, char **argv)
   descritor_dcel *poliedro1 = processa_arq_entrada(param.arq_entrada1);
 
   // Verifica se o arquivo foi aberto com sucesso
-  if (!poliedro1)
-  {
+  if (!poliedro1){
     msg_erro_ler_arquivo(param.arq_entrada1);
     return 1;
   }
@@ -45,8 +44,7 @@ int main(int argc, char **argv)
   descritor_dcel *poliedro2 = processa_arq_entrada(param.arq_entrada2);
 
   // Verifica se o arquivo foi aberto com sucesso
-  if (!poliedro2)
-  {
+  if (!poliedro2){
     msg_erro_ler_arquivo(param.arq_entrada2);
     return 1;
   }
@@ -56,28 +54,31 @@ int main(int argc, char **argv)
   dcel_t *d1 = cria_dcel(poliedro1);
   dcel_t *d2 = cria_dcel(poliedro2);
 
-  poligono_2d_t polA = extrai_poligono_projecao(*d1);
-  poligono_2d_t polB = extrai_poligono_projecao(*d2);
+  //===============PASSO 1: PROJECAO 2D===============
+  projecao_poligono_2d_t polA = extrai_poligono_projecao(*d1);
+  projecao_poligono_2d_t polB = extrai_poligono_projecao(*d2);
 
   debug_teste_interseccao_2d(polA, polB);
 
-  ponto_2d p_istrela;
-  std::pair<uint8_t, std::size_t> par_saida_p_estrela = encontrar_ponto_p_estrela(polA, polB, p_istrela);
+  //===============PASSO 2: PONTO COMUM NO DOMINIO DA INTERSECCAO===============
+  interseccao_2d_t saida_p_estrela = encontrar_ponto_p_estrela(polA, polB);
   
-  if (par_saida_p_estrela.first){ // Existe um ponto na interseccao 2D de A ou B (vertice ou sobreposicao de arestas)
+  if (saida_p_estrela.cod_origem){ // Existe um ponto na interseccao 2D de A ou B (vertice ou sobreposicao de arestas)
     
-    //Calcula pré imagem de p*
-    std::pair<bool, std::pair<double, double>> par_pre_img = intervalo_pre_img(d1, d2, p_istrela);
-    if(par_pre_img.first){
+    //===============PASSO 3: PRE IMAGEM===============
+    analise_interseccao_vertical_t pre_img = intervalo_pre_img(d1, d2, saida_p_estrela.p_estrela);
+    if(pre_img.existe_sobreposicao){
+      //===============PASSO FINAL: PODE IR PARA A DUALIZACAO===============      
       std::cout<<"Sobreposição da pré imagem válida.\n";
-      std::cout<<"Ponto p* -> "<<p_istrela<<"\n";
-      std::cout<<"Segmento da pré imagem na intersecção de -> "<<p_istrela<<" "<<par_pre_img.second.first<<" até "<<p_istrela<<" "<<par_pre_img.second.second<<"\n";
+      std::cout<<"Ponto p* -> "<<saida_p_estrela.p_estrela<<"\n";
+      std::cout<<"Segmento da pré imagem na intersecção de -> "<<saida_p_estrela.p_estrela<<" "<<pre_img.limite_inf<<" até "<<saida_p_estrela.p_estrela<<" "<<pre_img.limite_sup<<"\n";
     }
     else{
       std::cout<<"Sobreposição da pré imagem inválida.\n";
     }
   }
   else{
+    //===============PASSO FINAL: INTERSECCAO VAZIA===============
     std::cout<<"Poligonos projetados não se sobrepoẽm.\n";
 	}
 

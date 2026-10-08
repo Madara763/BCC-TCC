@@ -100,26 +100,19 @@ void debug_triangula_e_valida_dcel(dcel_t* d) {
 }
 
 //Recebe as projecoes e imprime na tela se ha ou nao a interseccao e qual vertice corresponde ao p*
-void debug_teste_interseccao_2d(const poligono_2d_t& pol1, const poligono_2d_t& pol2) {
+void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projecao_poligono_2d_t& pol2) {
 	std::cout << "========== TESTE INTERSECCAO 2D (p*) ==========\n";
 
-	ponto_2d p_estrela;
-
 	//executa a interseccao 2d e recebe o par de resultados
-	std::pair<uint8_t, std::size_t> resultado = encontrar_ponto_p_estrela(pol1, pol2, p_estrela);
+	interseccao_2d_t resultado = encontrar_ponto_p_estrela(pol1, pol2);
 
-	uint8_t status_id = resultado.first; //Se o resultado.first for 0 eh pq nao teve interseccao
-	std::size_t indice_vertice = resultado.second;
-
-	bool houve_interseccao = (status_id != 0);
-
-	if(!houve_interseccao) {
+	if(!resultado.cod_origem) {
 		std::cout << "Resultado: Poliedros separados. Interseccao nula.\n";
 	}
   else{
-		std::cout << "Resultado: Sobreposicao detectada! Coordenadas de p*: ("<< p_estrela.x << ", " << p_estrela.y << ")\n";
-    if(resultado.first == 1 || resultado.first == 2)
-		  std::cout << "Status: Coincide com o vertice [ "<<indice_vertice<<" ] do Poliedro " << static_cast<int>(status_id) << ".\n";
+		std::cout << "Resultado: Sobreposicao detectada! Coordenadas de p*: ("<< resultado.p_estrela.x << ", " << resultado.p_estrela.y << ")\n";
+    if(resultado.cod_origem == 1 || resultado.cod_origem == 2)
+		  std::cout << "Status: Coincide com o vertice [ "<<resultado.ind_original<<" ] do Poliedro " << resultado.cod_origem << ".\n";
     else
       std::cout << "Status: Vertice Virtual\n";
 	}

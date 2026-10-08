@@ -7,6 +7,11 @@ Data: 19/09/2026
 */
 #include "fitcp.hpp"
 
+#include <cmath>
+#include <cstdint>
+#include <limits>
+#include <utility>
+
 /*
     Biblioteca externa disponivel em https://github.com/AngusJohnson/Clipper2
     Usamos essa lib devido sua implementacao baseada no algoritmo de Vatti no lugar do algoritmo de Shamos-Hoey
@@ -15,12 +20,20 @@ Data: 19/09/2026
     Vatti -> O(NlogN)
     Shamos-Hoey -> O(N)
 */
-#include <cmath>
-#include <cstdint>
-#include <limits>
-#include <utility>
-
 #include "Clipper2Lib/include/clipper2/clipper.h"
+
+//Tipo de retorno do passo 3
+//Calula a pre imagem do ponto p*
+// typedef struct{
+//   bool existe_sobreposicao{false}; //indica se existe uma sobreposicao nos segmentos verticais em A e B
+//   double limite_sup{0.0}; //Altura no eixo Z 
+//   double limite_inf{0.0}; //Altura no eixo Z
+//   //Quando true, indica que o poliedro A, esta acima do B quando ordenado no eixo Z
+//   //Usaremos para construir o near-side no proximo passo quando a sobreposicao for invalida em p*
+//   bool pol_a_esta_acima{true}; 
+
+// } analise_interseccao_vertical_t;
+
 
 //==================================================
 // FUNCOES PARA A PRIMEIRA VERIFICACAO DO ARTIGO
@@ -37,9 +50,9 @@ Data: 19/09/2026
 
 //Encontra o contorno de suporte vertical de um poliedro
 //Retorna o poligono 2D da projeção, e um vetor com os indices das semi arestas que foram projetadas
-poligono_2d_t extrai_poligono_projecao(const dcel_t &d)
+projecao_poligono_2d_t extrai_poligono_projecao(const dcel_t &d)
 {
-  poligono_2d_t contorno;
+  projecao_poligono_2d_t contorno;
   size_t aresta_inicial = INVALID_INDEX;
 
   // Aqui olhamos para o poliedro e nao para a dcel em si
@@ -117,8 +130,7 @@ poligono_2d_t extrai_poligono_projecao(const dcel_t &d)
 // Se o prod vetorial > 0 p esta dentro
 // Se o prod vetorial = 0 p esta na borda, em cima da aresta
 // Se o prod vetorial < 0 p esta fora
-bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2)
-{
+bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2){
   return ((p2.x - p1.x) * (p.y - p1.y) - (p2.y - p1.y) * (p.x - p1.x) >= -EPS);
 }
 
@@ -129,15 +141,13 @@ bool dentro_do_plano_de_corte(ponto_2d p, ponto_2d p1, ponto_2d p2)
 // Fator de multiplicacao para conversao de ponto flutuante para int64_t na Clipper2
 constexpr double CLIPPER_SCALE = 1e6;
 
-// Calcula a intersecao 2D dos poligonos projetados usando a biblioteca Clipper2.
-// Retorna um pair, indicando qual o poligono com o vertice na interseccao e qual o indice do vertice
-// Ex: Vertice em A "return {1, n}", Vertice em B "return {2, n}". Sendo N o indice do vertice do poligono_2d_t
-// Se a interseccao for nula, o pair retornado eh (0, 0)
-// CASO ESPECIAL: Quando houver interseccao, mas nenhum vertice de A* ou B* estiver na interseccao, um novo vertice tem que ser adicionado a DCEL
-// O pair devolvido tera o pirmeiro valor igual a 3, indicando que caiu nesse caso especial, o segundo campo sera 0,
-//  e as coordenadas do ponto de cruzamento de aresta estara no terceiro parametro
-std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t &poligonoA, const poligono_2d_t &poligonoB, ponto_2d &p_estrela)
-{
+//Calcula a intersecao 2D dos poligonos projetados usando a biblioteca Clipper2.
+//Retorna informacoes sobre o calculo da interseccao em 2D
+interseccao_2d_t encontrar_ponto_p_estrela(const projecao_poligono_2d_t& poligonoA, const projecao_poligono_2d_t& poligonoB){
+
+  //struct para o retorno da funcao
+  interseccao_2d_t saida;
+
   Clipper2Lib::Path64 pathA, pathB;
 
   // Converte Poligono A para o formato int64 da Clipper2
@@ -159,33 +169,38 @@ std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t &p
 
   // Se nao ha colisao, os poliedros estao separados
   if (solution.empty() || solution[0].empty()){
-    return {0, 0}; // Esse par indica que nao ha interseccao
+    return saida; // Esse par indica que nao ha interseccao
   }
 
   // Tolerancia baseada na escala de arredondamento
   double epsilon_clipper = 1.0 / CLIPPER_SCALE;
+
 
   // Percorre todos os pontos do poligono de intersecao gerado para tentar encontrar um vertice real
   // Fazemos isso para tentar evitar a criacao de um vertrice virtualna DCEL
   for (const Clipper2Lib::Point<int64_t> &p_clipper : solution[0])
   {
     // Restaura a precisao de ponto flutuante para o ponto atual da iteracao
-    p_estrela.x = static_cast<t_coord>(p_clipper.x) / CLIPPER_SCALE;
-    p_estrela.y = static_cast<t_coord>(p_clipper.y) / CLIPPER_SCALE;
+    saida.p_estrela.x = static_cast<t_coord>(p_clipper.x) / CLIPPER_SCALE;
+    saida.p_estrela.y = static_cast<t_coord>(p_clipper.y) / CLIPPER_SCALE;
 
     // Verifica proximidade nos vertices originais de A*
     for (size_t i = 0; i < poligonoA.vertices.size(); ++i){
-      double dist = std::hypot(poligonoA.vertices[i].x - p_estrela.x, poligonoA.vertices[i].y - p_estrela.y);
+      double dist = std::hypot(poligonoA.vertices[i].x - saida.p_estrela.x, poligonoA.vertices[i].y - saida.p_estrela.y);
       if (dist <= epsilon_clipper){
-        return {1, poligonoA.indices_originais[i]}; // Encontrou em A, retorna imediatamente
+        saida.cod_origem = 1;
+        saida.ind_original = poligonoA.indices_originais[i];
+        return saida; // Encontrou em A, retorna imediatamente
       }
     }
 
     // Verifica proximidade nos vertices originais de B*
     for (size_t i = 0; i < poligonoB.vertices.size(); ++i){
-      double dist = std::hypot(poligonoB.vertices[i].x - p_estrela.x, poligonoB.vertices[i].y - p_estrela.y);
+      double dist = std::hypot(poligonoB.vertices[i].x - saida.p_estrela.x, poligonoB.vertices[i].y - saida.p_estrela.y);
       if (dist <= epsilon_clipper){
-        return {2, poligonoB.indices_originais[i]}; // Encontrou em B, retorna imediatamente
+        saida.cod_origem = 2;
+        saida.ind_original = poligonoB.indices_originais[i];
+        return saida; // Encontrou em B, retorna imediatamente
       }
     }
   }
@@ -193,10 +208,12 @@ std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t &p
   // Se o loop terminar sem retornar, significa que NENHUM vertice do poligono de intersecao
   // coincide com os vertices originais. Estamos lidando com um cruzamento puro de arestas.
   // Assumimos o primeiro ponto gerado como o nosso p* virtual.
-  p_estrela.x = static_cast<t_coord>(solution[0][0].x) / CLIPPER_SCALE;
-  p_estrela.y = static_cast<t_coord>(solution[0][0].y) / CLIPPER_SCALE;
+  saida.p_estrela.x = static_cast<t_coord>(solution[0][0].x) / CLIPPER_SCALE;
+  saida.p_estrela.y = static_cast<t_coord>(solution[0][0].y) / CLIPPER_SCALE;
 
-  return {3, 0};
+  saida.cod_origem = 3;
+
+  return saida;
 }
 
 //==================================================
@@ -208,8 +225,8 @@ std::pair<uint8_t, std::size_t> encontrar_ponto_p_estrela(const poligono_2d_t &p
 // Retorna uma tupla, onde o primeiro booleano diz se sobreposicao das pre imagens e valida
 // O segundo pair contem respectivamente o limite superior e inferior do segmento de
 //  reta vertical em p_estrela que esta dentro da interseccao dos dois poliedros
-std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t *d2, ponto_2d p_estrela)
-{
+analise_interseccao_vertical_t intervalo_pre_img(dcel_t *d1, dcel_t *d2, ponto_2d p_estrela){
+
   /*Varre a dcel d1 e verifica as duas faces que sao cortadas pela reta vertical em Z que passa pelo ponto p*
     Salva as duas faces
     Varre a dcel d2 e verifica as duas faces que sao cortadas pela reta vertical em Z que passa pelo ponto p*
@@ -219,6 +236,9 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     Se obtivermos uma ordem como p_inf_d1 <= p_inf_d2 < p_sup_d1 <= p_sup_d2 (olha a coord Z desses 4 pontos)
     Isso significa que o segmento de reta que passa por p* e tem e eh delimitada por p_inf_d1 e p_sup_d2, esta garantidamente na intersccao dos poliedros d1 e d2
   */
+  
+  analise_interseccao_vertical_t retorno;
+
   // Define a eq da reta do raycasting q passa pelo ponto p*
   ponto_3d pz_raio{p_estrela.x, p_estrela.y, 0.0}; // Ponto de origem do raio
   ponto_3d vz_raio{0.0, 0.0, 1};                   // Vetor direção do raio
@@ -227,8 +247,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
   double amin{-(std::numeric_limits<double>::infinity())}, amax{std::numeric_limits<double>::infinity()};
 
   // Itera sobre as faces da dcel
-  for (size_t i = 0; i < d1->mapa_faces.size(); i++)
-  {
+  for (size_t i = 0; i < d1->mapa_faces.size(); i++){
     // produto escalar entre a normal da face e o vetor direção do raio
     double denominador = prod_escalar(d1->mapa_faces[i], vz_raio);
 
@@ -246,7 +265,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     if (std::abs(denominador) < EPS){
       //Se o numerador for positivo, a reta inteira está do lado de FORA deste plano
 			if (numerador > EPS){ //AQUI TEM UM ERRO DE PRECISAO EM ALGUNS CASOS
-        return {false, {0.0, 0.0}}; 
+        return retorno; 
       }
       continue; // Paralela do lado de dentro, continua testando as outras faces
     }
@@ -269,7 +288,7 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     //Se o intervalo colapsar, a reta não passa por dentro do objeto
     //Passa na projeçao dos planos das faces
     if (amin > amax + EPS){
-      return {false, {0.0, 0.0}};
+      return retorno;
     }
   } // iteracao dcel 1
 
@@ -280,8 +299,8 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
   double bmin{-(std::numeric_limits<double>::infinity())}, bmax{std::numeric_limits<double>::infinity()};
 
   // Itera sobre as faces da dcel
-  for (size_t i = 0; i < d2->mapa_faces.size(); i++)
-  {
+  for (size_t i = 0; i < d2->mapa_faces.size(); i++){
+
     // produto escalar entre a normal da face e o vetor direção do raio
     double denominador = prod_escalar(d2->mapa_faces[i], vz_raio);
 
@@ -296,19 +315,17 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     double numerador = prod_escalar(d2->mapa_faces[i], vet_aux);
 
     // Se a reta for paralela ao plano da face
-    if (std::abs(denominador) < EPS)
-    {
+    if (std::abs(denominador) < EPS){
       //Se o numerador for positivo, a reta inteira está do lado de FORA deste plano
-			if (numerador > 0.0){
-        std::cout<<"GATPO";
-        return {false, {0.0 , 0.0}}; 
+			if (numerador > EPS){
+        return retorno; 
       }
       continue; // Paralela do lado de dentro, continua testando as outras faces
     }
 
     double t = numerador / denominador;
 
-    if (denominador > 0.0){
+    if (denominador > EPS){
       // Reta e normal no mesmo sentido -> Ponto de ENTRADA
       if (t > bmin){
         bmin = t; // Estreita o limite de entrada
@@ -324,28 +341,41 @@ std::pair<bool, std::pair<double, double>> intervalo_pre_img(dcel_t *d1, dcel_t 
     //Se o intervalo colapsar, a reta não passa por dentro do objeto
     //Passa na projeçao dos planos das faces
     if (bmin > bmax + EPS){
-      std::cout<<"BOLA";
-      return {false, {0.0 , 0.0}};
+      return retorno;
     }
   } // iteracao dcel 2
-
   //bmin e bmax guardam b' e b''
+
+  //Verifica qual poliedro esta acima do outro
+  if(amin >= bmax - EPS){
+    retorno.pol_a_esta_acima = true; //redundante
+  }
+  else if(bmin >= amax - EPS){
+    retorno.pol_a_esta_acima = false; 
+  }
+  else { // Se houver sobreposição parcial, compara a altura dos centros dos intervalos 
+    double mid_a = (amin + amax) / 2.0; 
+    double mid_b = (bmin + bmax) / 2.0; 
+    retorno.pol_a_esta_acima = (mid_a >= mid_b); 
+  }
 
   //Verifica sobreposição dos dois segmentos de reta
   //retorna o segmento de reta que está dentro dos dois poligonos ao mesmo tempo
   double t_entrada_comum = std::max(amin, bmin);
   double t_saida_comum   = std::min(amax, bmax);
 
-  std::cout<<"Amin: "<<amin<<"Amax: "<<amax<<"Bmin: "<<bmin<<"Bmax: "<<bmax<<"\n";
-
   // Se o ponto de entrada comum for maior que o de saida, não há sobreposição
   if (t_entrada_comum > t_saida_comum){
-    return {false, {0.0 , 0.0}};
+    return retorno;
   }
 
   //Reconstroi os pontos 3D  de entrada e saida do raio usando a equação parametrica do raio (P = P0 + t * V)
   //Envia a coordenada no eixo Z 
-  return {true, {(pz_raio.z + t_entrada_comum), (pz_raio.z + t_saida_comum)}};
+  retorno.existe_sobreposicao = true;
+  retorno.limite_inf = t_entrada_comum;
+  retorno.limite_sup = t_saida_comum;
+
+  return retorno;
 }
 
 //Encontra uma das arestas que geraram o vertice virtual par enconntrar o p*
