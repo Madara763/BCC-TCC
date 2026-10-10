@@ -65,7 +65,6 @@ typedef struct{
 //Retorna o poligono 2D da projeção, e um vetor com os indices das semi arestas que foram projetadas
 projecao_poligono_2d_t extrai_poligono_projecao(const dcel_t& d);
 
-
 // Testa de que lado o ponto esta em relacao a uma linha
 // Produto vetorial 2D para determinar o lado da linha
 // Aqui consideramos que a navegacao eh sempre sem sentido anti-horario
@@ -90,5 +89,18 @@ analise_interseccao_vertical_t intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2
 //Divide a aresta no meio, dividindo cada face em duas
 //Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
 //std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2);
+
+//==================================================
+// FUNCOES PARA A FASE DE DUALIZACAO - CAPITULO 3 DO ARTIGO
+//==================================================
+
+
+
+
+
+
+ponto_3d calcula_ponto_interno(analise_interseccao_vertical_t res_pre_img, ponto_2d p_estrela);
+
+dcel_t* calcula_interseccao_via_dualizacao(dcel_t* d1, dcel_t* d2, ponto_3d origem);
 
 #endif

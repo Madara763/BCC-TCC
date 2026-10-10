@@ -30,5 +30,8 @@ void debug_triangula_e_valida_dcel(dcel_t* d);
 //Recebe as projecoes e imprime na tela se ha ou nao a interseccao e qual vertice corresponde ao p*
 void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projecao_poligono_2d_t& pol2);
 
+//Recebe o ponto p* e calcula a pre imagem, imprime na tela detalhes da etapa
+void debug_teste_pre_imagem(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
+
 
 #endif

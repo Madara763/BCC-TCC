@@ -68,13 +68,14 @@ int main(int argc, char **argv)
     //===============PASSO 3: PRE IMAGEM===============
     analise_interseccao_vertical_t pre_img = intervalo_pre_img(d1, d2, saida_p_estrela.p_estrela);
     if(pre_img.existe_sobreposicao){
-      //===============PASSO FINAL: PODE IR PARA A DUALIZACAO===============      
-      std::cout<<"Sobreposição da pré imagem válida.\n";
-      std::cout<<"Ponto p* -> "<<saida_p_estrela.p_estrela<<"\n";
-      std::cout<<"Segmento da pré imagem na intersecção de -> "<<saida_p_estrela.p_estrela<<" "<<pre_img.limite_inf<<" até "<<saida_p_estrela.p_estrela<<" "<<pre_img.limite_sup<<"\n";
+      //===============PASSO FINAL: PODE IR PARA A DUALIZACAO===============  
+      ponto_3d origem_para_dualizacao = calcula_ponto_interno(pre_img ,saida_p_estrela.p_estrela);
+      dcel_t* d3 = calcula_interseccao_via_dualizacao(d1, d2, origem_para_dualizacao);
+
+      delete (d3);
     }
-    else{
-      std::cout<<"Sobreposição da pré imagem inválida.\n";
+    else{ //===============PASSO 4: ENCONTRAR AS CASCAS NEAR-SIDE===============      
+
     }
   }
   else{
@@ -83,7 +84,7 @@ int main(int argc, char **argv)
 	}
 
   
-  imprime_dcel_formatada(cout, d1);
+  //imprime_dcel_formatada(cout, d1);
   // Libera memoria
   delete (d1);
   delete (d2);

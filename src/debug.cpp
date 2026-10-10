@@ -112,10 +112,25 @@ void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projec
   else{
 		std::cout << "Resultado: Sobreposicao detectada! Coordenadas de p*: ("<< resultado.p_estrela.x << ", " << resultado.p_estrela.y << ")\n";
     if(resultado.cod_origem == 1 || resultado.cod_origem == 2)
-		  std::cout << "Status: Coincide com o vertice [ "<<resultado.ind_original<<" ] do Poliedro " << resultado.cod_origem << ".\n";
+		  std::cout << "Status: Coincide com o vertice [ "<<resultado.ind_original<<" ] do Poliedro " << static_cast<int>(resultado.cod_origem) << ".\n";
     else
-      std::cout << "Status: Vertice Virtual\n";
+      std::cout << "Status: Vertice \"Virtual\"\n";
 	}
 
+	std::cout << "===============================================\n";
+}
+
+//Recebe o ponto p* e calcula a pre imagem, imprime na tela detalhes da etapa
+void debug_teste_pre_imagem(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela){
+	analise_interseccao_vertical_t pre_img = intervalo_pre_img(d1, d2, p_estrela);
+	std::cout << "========== TESTE SOBREPOSICAO VERTICAL EM (X,Y) = "<<p_estrela<<" ==========\n";
+	if(pre_img.existe_sobreposicao) {
+		std::cout << "Sobreposição da pré imagem válida.\n";
+		std::cout << "Ponto p* -> " << p_estrela << "\n";
+		std::cout << "Segmento da pré imagem na intersecção de -> " << p_estrela << " " << pre_img.limite_inf << " até " << p_estrela << " " << pre_img.limite_sup << "\n";
+	}
+	else {
+		std::cout << "Sem sobreposição vertical no eixo Z (pré imagem) nos poliedros no ponto "<<p_estrela<<".\n";
+	}
 	std::cout << "===============================================\n";
 }

@@ -13,26 +13,20 @@ Data: 19/09/2026
 #include <utility>
 
 /*
-    Biblioteca externa disponivel em https://github.com/AngusJohnson/Clipper2
-    Usamos essa lib devido sua implementacao baseada no algoritmo de Vatti no lugar do algoritmo de Shamos-Hoey
-    Escolha feita devido a complexidade de implententacao e erros de ponto flutuante envolvidos no Shamos-Hoey
-    Assintoticamente mais caro.
-    Vatti -> O(NlogN)
-    Shamos-Hoey -> O(N)
+  Biblioteca externa disponivel em https://github.com/AngusJohnson/Clipper2
+  Usamos essa lib devido sua implementacao baseada no algoritmo de Vatti no lugar do algoritmo de Shamos-Hoey
+  Escolha feita devido a complexidade de implententacao e erros de ponto flutuante envolvidos no Shamos-Hoey
+  Assintoticamente mais caro.
+  Vatti -> O(NlogN)
+  Shamos-Hoey -> O(N)
 */
 #include "Clipper2Lib/include/clipper2/clipper.h"
 
-//Tipo de retorno do passo 3
-//Calula a pre imagem do ponto p*
-// typedef struct{
-//   bool existe_sobreposicao{false}; //indica se existe uma sobreposicao nos segmentos verticais em A e B
-//   double limite_sup{0.0}; //Altura no eixo Z 
-//   double limite_inf{0.0}; //Altura no eixo Z
-//   //Quando true, indica que o poliedro A, esta acima do B quando ordenado no eixo Z
-//   //Usaremos para construir o near-side no proximo passo quando a sobreposicao for invalida em p*
-//   bool pol_a_esta_acima{true}; 
-
-// } analise_interseccao_vertical_t;
+/*
+  Biblioteca externa disponivel em https://github.com/akuukka/quickhull
+  Usamos essa lib para utilizar su implementacao do QuikHull usado no calculo do fecho convexo da interseccao
+*/
+#include "quickhullLib/QuickHull.hpp"
 
 
 //==================================================
@@ -384,6 +378,91 @@ analise_interseccao_vertical_t intervalo_pre_img(dcel_t *d1, dcel_t *d2, ponto_2
 //Adiciona o novo vertice na dcel, e retorna qual dcel e qual o indice do novo vertice
 //std::pair<uint8_t, size_t> adiciona_vertice_virtual(ponto_2d p_estrela, const poligono_2d_t& polA, const poligono_2d_t& polB, dcel_t* d1, dcel_t* d2){}
 
+//==================================================
+// FUNCOES PARA A FASE DE DUALIZACAO - CAPITULO 3 DO ARTIGO
+//==================================================
+
+//FUNCOES INTERNAS
+//Adaptacao para o Qhull do Akuukka
+//Adapta os vertices da dcel_t para o formato de entrada do QuickHull
+std::vector<quickhull::Vector3<double>> interno_extrair_pontos_para_quickhull(const dcel_t& dual_malha) {
+	std::vector<quickhull::Vector3<double>> qh_pontos;
+	qh_pontos.reserve(dual_malha.mapa_vertices.size());
+
+	for(const auto& v : dual_malha.mapa_vertices) {
+		qh_pontos.push_back(quickhull::Vector3<double>(v.pos.x, v.pos.y, v.pos.z));
+	}
+
+	return qh_pontos;
+}
+
+//Função que converte o resultado do QuickHull em Descritor DCEL pra reconstruir a dcel depois
+descritor_dcel* interno_construir_descritor_via_quickhull(const quickhull::ConvexHull<double>& hull) {
+	
+	descritor_dcel* descritor = new descritor_dcel();
+
+	//pega o buffer contendo vertices que formam a casca
+	const auto& qh_vertices = hull.getVertexBuffer();
+
+	//buffer de índices que formam as faces triangulares
+	const auto& qh_indices = hull.getIndexBuffer();
+
+	//Preenche os pontos no descritor
+	descritor->pontos.reserve(qh_vertices.size());
+	for(size_t i = 0; i < qh_vertices.size(); ++i) {
+		ponto_3d p;
+		p.x = qh_vertices[i].x;
+		p.y = qh_vertices[i].y;
+		p.z = qh_vertices[i].z;
+		descritor->pontos.push_back(p);
+	}
+
+	//Preenche as faces no descritor
+	//O QuickHull retorna um vetor linearizado de índices onde cada bloco de 3 forma um triângulo
+	for(size_t i = 0; i < qh_indices.size(); i += 3) {
+		std::vector<uint64_t> face_atual;
+		face_atual.reserve(3);
+
+		//Adiciona os 3 índices do triângulo
+		face_atual.push_back(static_cast<uint64_t>(qh_indices[i]));
+		face_atual.push_back(static_cast<uint64_t>(qh_indices[i + 1]));
+		face_atual.push_back(static_cast<uint64_t>(qh_indices[i + 2]));
+
+		descritor->faces.push_back(face_atual);
+	}
+
+	return descritor;
+}
+
+//Recebe a analise da pre imagem com os limites da pre imagem
+//Retorna o ponto medio que pertence a ambos os poliedros
+ponto_3d calcula_ponto_interno(analise_interseccao_vertical_t res_pre_img, ponto_2d p_estrela){
+  //Inicia como um ponto invalido
+  ponto_3d q{std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN()};
+  if(res_pre_img.existe_sobreposicao){
+    q.x = p_estrela.x;
+    q.y = p_estrela.y;
+    q.z = (res_pre_img.limite_sup + res_pre_img.limite_inf) / 2;
+  }
+  return q;
+}
+
+dcel_t* calcula_interseccao_via_dualizacao(dcel_t* d1, dcel_t* d2, ponto_3d origem){
+  dcel_t* d3{new dcel_t};
+
+
+
+  
+
+
+
+
+
+
+
+
+  return d3;
+}
 
 
 
