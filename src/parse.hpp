@@ -41,4 +41,6 @@ int imprime_dcel_no_arquivo(std::string nome_arq, const dcel_t* d);
 //Imprime a dcel_t na tela/stream com a formatacao padrao de entrada 
 void imprime_dcel_formatada(std::ostream& os, const dcel_t* d);
 
+// Funcao auxiliar para validar os parametros da main
+bool validar_parametros(int argc, char *argv[], parametros &params);
 #endif
