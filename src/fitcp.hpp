@@ -27,11 +27,15 @@ typedef struct{
 
 //Tipo de retorno do passo 2, busca da interseccao nos poligonos projetados
 typedef struct{
+  bool tem_interseccao{false};
+  ponto_2d p_estrela_deslocado{0.0, 0.0}; //deslocado para o interiro do dominio da sobreposicao usando baricentro 
+
+  //Informacoes para os passo de caminhada
   //Indica de onde veio o ponto p*, se eh um vertice real ou se veio de cruzamento de arestas
   //1 se p* eh coincide com um vertice da dcel A, 2 da B
-  //3 se o popnto p* veiod e cruzamento de arestas e nao pode ser mapeado em um vertice real
-  //E 0 se nao ha ponto p* na interseccao da projecao 2D
-  uint8_t cod_origem{0};
+  //3 se o ponto p* veio de cruzamento de arestas e nao pode ser mapeado em um vertice real
+  //0 se nao ha sobreposicao em 2D
+  uint8_t origem{0};
   size_t ind_original{INVALID_INDEX}; //Se cod_origem for 1 ou 2, contem o indice do vertice na DCEL
   ponto_2d p_estrela{0.0, 0.0}; //Cordenadas (X,Y) do ponto, quando existir
 } interseccao_2d_t;
@@ -93,11 +97,6 @@ analise_interseccao_vertical_t intervalo_pre_img(dcel_t* d1, dcel_t* d2, ponto_2
 //==================================================
 // FUNCOES PARA A FASE DE DUALIZACAO - CAPITULO 3 DO ARTIGO
 //==================================================
-
-
-
-
-
 
 ponto_3d calcula_ponto_interno(analise_interseccao_vertical_t res_pre_img, ponto_2d p_estrela);
 

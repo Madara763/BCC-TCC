@@ -166,12 +166,32 @@ interseccao_2d_t encontrar_ponto_p_estrela(const projecao_poligono_2d_t& poligon
     return saida; // Esse par indica que nao ha interseccao
   }
 
+  //===============Desloca o ponto para o interior da sobreposicao===============
+  //Calculamo o baricentro do triangulo formado pelos 3 primeiros vertices da interseccao das projecoes 2D
+  //Verifica se a intersecao formou um poligono com area (minimo 3 vertices)
+  if(solution[0].size() >= 3) {
+	  
+    //Pega os 3 primeiros pontos gerados pela Clipper2 (3 PONTOS NAO COLIEARES FORMAM UM TRIANGULO)
+	  Clipper2Lib::Point<int64_t> p1 = solution[0][0];
+	  Clipper2Lib::Point<int64_t> p2 = solution[0][1];
+	  Clipper2Lib::Point<int64_t> p3 = solution[0][2];
+
+	  //Calcula o baricentro do triangulo formado pelos 3 primeiros pontos
+	  //e restaura a precisao de ponto flutuante dividindo pela escala
+	  saida.p_estrela_deslocado.x = static_cast<t_coord>(p1.x + p2.x + p3.x) / (3.0 * CLIPPER_SCALE);
+	  saida.p_estrela_deslocado.y = static_cast<t_coord>(p1.y + p2.y + p3.y) / (3.0 * CLIPPER_SCALE);
+
+	  //Como garantimos que o ponto e estritamente interno, ele NUNCA sera um vertice original das bordas
+	  saida.tem_interseccao = true;
+  }
+
+  //===============Mapeia a sobreposicao para as dcel originais===============
+
   // Tolerancia baseada na escala de arredondamento
   double epsilon_clipper = 1.0 / CLIPPER_SCALE;
 
-
   // Percorre todos os pontos do poligono de intersecao gerado para tentar encontrar um vertice real
-  // Fazemos isso para tentar evitar a criacao de um vertrice virtualna DCEL
+  // Fazemos isso para tentar evitar a criacao de um vertrice virtual na DCEL
   for (const Clipper2Lib::Point<int64_t> &p_clipper : solution[0])
   {
     // Restaura a precisao de ponto flutuante para o ponto atual da iteracao
@@ -182,7 +202,7 @@ interseccao_2d_t encontrar_ponto_p_estrela(const projecao_poligono_2d_t& poligon
     for (size_t i = 0; i < poligonoA.vertices.size(); ++i){
       double dist = std::hypot(poligonoA.vertices[i].x - saida.p_estrela.x, poligonoA.vertices[i].y - saida.p_estrela.y);
       if (dist <= epsilon_clipper){
-        saida.cod_origem = 1;
+        saida.origem = 1;
         saida.ind_original = poligonoA.indices_originais[i];
         return saida; // Encontrou em A, retorna imediatamente
       }
@@ -192,20 +212,19 @@ interseccao_2d_t encontrar_ponto_p_estrela(const projecao_poligono_2d_t& poligon
     for (size_t i = 0; i < poligonoB.vertices.size(); ++i){
       double dist = std::hypot(poligonoB.vertices[i].x - saida.p_estrela.x, poligonoB.vertices[i].y - saida.p_estrela.y);
       if (dist <= epsilon_clipper){
-        saida.cod_origem = 2;
+        saida.origem = 2;
         saida.ind_original = poligonoB.indices_originais[i];
         return saida; // Encontrou em B, retorna imediatamente
       }
     }
   }
-
-  // Se o loop terminar sem retornar, significa que NENHUM vertice do poligono de intersecao
-  // coincide com os vertices originais. Estamos lidando com um cruzamento puro de arestas.
-  // Assumimos o primeiro ponto gerado como o nosso p* virtual.
+  
+  //Se o loop terminar sem retornar, significa que NENHUM vertice do poligono de intersecao
+  //coincide com os vertices originais. Estamos lidando com um cruzamento puro de arestas.
+  //Assumimos o primeiro ponto gerado como o nosso p* virtual
   saida.p_estrela.x = static_cast<t_coord>(solution[0][0].x) / CLIPPER_SCALE;
   saida.p_estrela.y = static_cast<t_coord>(solution[0][0].y) / CLIPPER_SCALE;
-
-  saida.cod_origem = 3;
+  saida.origem = 3;
 
   return saida;
 }
@@ -447,21 +466,107 @@ ponto_3d calcula_ponto_interno(analise_interseccao_vertical_t res_pre_img, ponto
   return q;
 }
 
+/*
+  Funcao principal do algoritmo de muller e preparata
+  Matematicamente, oq acontece aqui eh o seguinte:
+    Temos os dois poliedros d1 e d2 e um ponto interno a ambos que sera a nova origem do espaco 3D
+    Tiramos o Dual dos dois poliedros, cada face vira um novo ponto no espaco dual, geramos uma nuvem de pontos
+    A partir disso, usamos o algoritmo de calculo do feho convexo (convex hull) 
+    Pegamos o novo poliedro gerado e novamente tiramos o seu dual (O que faz voltar ao espaco primal)
+    Esse poliedro convexo resultante eh a interseccao entre d1 e d2.
+
+  "O fecho convexo do dual do fecho convexo da uniao dos duais de A e B eh a interseccao entre A e B"
+
+  Explicando a implementacao agora:
+    Recebemos as duas DCEl (dos poliedros A e B) e o novo ponto de origem
+    Trasladamos as coordenadas de todas as faces de A e B
+    Pegamos o dual das faces, gerando um conjuntos de pontos no formato da quickhull do akuukka
+    O quickhull gera o fecho convexo
+    Convertemos o fecho convexo para um descritor da dcel
+    Geramos a nova dcel (para gerar as equacao das facas)
+    Tiramos seu dual novamente (Gerando um poliedro no espaco primal)
+    Reconstruimos a dcel 
+    Pronto, temos uma dcel da interseccao entre A e B
+    Retorna a dcel_t da interseccao
+*/
 dcel_t* calcula_interseccao_via_dualizacao(dcel_t* d1, dcel_t* d2, ponto_3d origem){
-  dcel_t* d3{new dcel_t};
 
-
-
+  if(!d1 || !d2) return nullptr;
   
+  std::vector<quickhull::Vector3<double>> qh_pontos;
 
+  //===============Converte faces em pontos, "move a origem para o ponto interno"===============
 
+  //Dualiza as faces do poliedro d1, faz faces -> vertices(pontos em 3D)
+  for(const face_t& f : d1->mapa_faces) {
+	  //Ajusta a constante d do plano para refletir a nova origem no ponto interno
+	  //d' = N . O + d
+	  double d_novo = (f.n1 * origem.x + f.n2 * origem.y + f.n3 * origem.z) + f.d;
+	  if(std::abs(d_novo) > EPS) { //Evita divisao por zero (embora teoricamente d_novo > 0 pois a origem esta estritamente dentro)
+		  qh_pontos.push_back(quickhull::Vector3<double>((f.n1 / d_novo), (f.n2 / d_novo), (f.n3 / d_novo)));
+	  }
+  }
 
+  //Dualiza as faces do poliedro 2
+  for (const face_t& f : d2->mapa_faces) {
+    double d_novo = (f.n1 * origem.x + f.n2 * origem.y + f.n3 * origem.z) + f.d;
+    if (std::abs(d_novo) > EPS) {
+      qh_pontos.push_back(quickhull::Vector3<double>((f.n1 / d_novo), (f.n2 / d_novo), (f.n3 / d_novo)));
+    }
+  }
 
+  if (qh_pontos.size() < 4) return nullptr; //evita pontos insuficientes
 
+  //===============Calculo do fecho convexo fornecido pelo quickhull do akuukka===============
+  quickhull::QuickHull<double> qh;
+  quickhull::ConvexHull<double> hull = qh.getConvexHull(qh_pontos, true, false);
 
+  //Construir o descritor e a DCEL do fecho convexo dual
+  descritor_dcel* desc_dual = interno_construir_descritor_via_quickhull(hull);
+  if (!desc_dual) return nullptr;
+  
+  dcel_t* dcel_dual = cria_dcel(desc_dual);
+  delete desc_dual;
+  if (!dcel_dual) return nullptr;
 
+  //===============Voltar ao espaco primal===============
+  std::vector<quickhull::Vector3<double>> qh_pontos_primal;
+
+  // Refaz a eq dos planos da malha dual para o espaco primal, gerando os vertices da intersecao
+  for(const face_t& f : dcel_dual->mapa_faces) {
+	  double d_novo = f.d;
+
+	  if(std::abs(d_novo) > EPS) {
+		  // Desfaz o shift somando a origem novamente
+		  double px = (f.n1 / d_novo) + origem.x;
+		  double py = (f.n2 / d_novo) + origem.y;
+		  double pz = (f.n3 / d_novo) + origem.z;
+		  qh_pontos_primal.push_back(quickhull::Vector3<double>(px, py, pz));
+	  }
+  }
+
+  //ja retiramos a nuvem de pontos dessa dcel
+  delete dcel_dual;
+
+  // Se o poliedro resultante tiver menos de 4 pontos, a interseção é degenerada/vazia
+  if (qh_pontos_primal.size() < 4) return nullptr;
+
+  //===============Calculo do fecho convexo PRIMAL -> Fecho convexo da interseccao===============
+  
+  //Roda o QuickHull novamente.
+  //Pontos sobrepostos (gerados pelas arestas diagonais) serão fundidos e ignorados internamente pela implemnetacao do Akuukka
+  quickhull::QuickHull<double> qh_primal;
+  quickhull::ConvexHull<double> hull_primal = qh_primal.getConvexHull(qh_pontos_primal, true, false);
+
+  //Constroi a estrutura de dados final da interseccao
+  descritor_dcel* desc_primal = interno_construir_descritor_via_quickhull(hull_primal);
+  if (!desc_primal) return nullptr;
+
+  dcel_t* d3 = cria_dcel(desc_primal);
+  delete desc_primal;
 
   return d3;
+
 }
 
 

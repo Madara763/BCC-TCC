@@ -1,7 +1,7 @@
 /*
 Essa lib contem funcoes para testar a DCEL e a FITCP
 Tem o objetivo de explanar o funcionamento do artigo "Finding the Intersection of Two Convex Polyhedra" e da DCEL
-Criado por: Davi Lazzarin
+Criado por: Davi Lazzarin 
 Data: 29/09/2026
 */
 #include "debug.hpp"
@@ -106,13 +106,14 @@ void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projec
 	//executa a interseccao 2d e recebe o par de resultados
 	interseccao_2d_t resultado = encontrar_ponto_p_estrela(pol1, pol2);
 
-	if(!resultado.cod_origem) {
+	if(!resultado.tem_interseccao) {
 		std::cout << "Resultado: Poliedros separados. Interseccao nula.\n";
 	}
   else{
 		std::cout << "Resultado: Sobreposicao detectada! Coordenadas de p*: ("<< resultado.p_estrela.x << ", " << resultado.p_estrela.y << ")\n";
-    if(resultado.cod_origem == 1 || resultado.cod_origem == 2)
-		  std::cout << "Status: Coincide com o vertice [ "<<resultado.ind_original<<" ] do Poliedro " << static_cast<int>(resultado.cod_origem) << ".\n";
+		std::cout << "Ponto interno: Coordenadas do baricentro: ("<< resultado.p_estrela_deslocado.x << ", " << resultado.p_estrela_deslocado.y << ")\n";
+    if(resultado.origem == 1 || resultado.origem == 2)
+		  std::cout << "Status: Ponto p* coincide com o vertice [ "<<resultado.ind_original<<" ] do Poliedro " << static_cast<int>(resultado.origem) << ".\n";
     else
       std::cout << "Status: Vertice \"Virtual\"\n";
 	}
@@ -133,4 +134,86 @@ void debug_teste_pre_imagem(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela){
 		std::cout << "Sem sobreposição vertical no eixo Z (pré imagem) nos poliedros no ponto "<<p_estrela<<".\n";
 	}
 	std::cout << "===============================================\n";
+}
+
+// Recebe as dcel e o ponto interno a ambas, imprime passo a passo a dualizacao e os fechos convexos
+void debug_teste_dualizacao(dcel_t* d1, dcel_t* d2, ponto_3d origem) {
+	std::cout << "\n========== DEBUG: CALCULO DE INTERSECCAO VIA DUALIZACAO ==========\n";
+	std::cout << "Ponto Interno (Origem Deslocada): " << origem << "\n";
+
+	if(!d1 || !d2) {
+		std::cout << "[Erro] Um ou ambos os poliedros sao nulos.\n";
+		return;
+	}
+
+	std::vector<quickhull::Vector3<double>> qh_pontos;
+
+	// ----- PASSO 1: Dualização do Poliedro A -----
+	std::cout << "\n--- PASSO 1: Dualizacao do Poliedro 1 ---\n";
+	for(size_t i = 0; i < d1->mapa_faces.size(); ++i) {
+		const face_t& f = d1->mapa_faces[i];
+
+		// Ajusta a constante 'd' baseada na nova origem (translacao espacial)
+		double d_novo = (f.n1 * origem.x + f.n2 * origem.y + f.n3 * origem.z) + f.d;
+
+		if(std::abs(d_novo) > EPS) {  // Evita divisão por zero
+			ponto_3d p_dual{(f.n1 / d_novo), (f.n2 / d_novo), (f.n3 / d_novo)};
+			std::cout << "  Face [" << i << "]: d_novo=" << d_novo
+			          << " \t-> Ponto Dual: " << p_dual << "\n";
+			qh_pontos.push_back(quickhull::Vector3<double>(p_dual.x, p_dual.y, p_dual.z));
+		} else {
+			std::cout << "  Face [" << i << "]: [Ignorada] O plano passa muito perto da origem (d_novo <= EPS).\n";
+		}
+	}
+
+	// ----- PASSO 2: Dualização do Poliedro B -----
+	std::cout << "\n--- PASSO 2: Dualizacao do Poliedro 2 ---\n";
+	for(size_t i = 0; i < d2->mapa_faces.size(); ++i) {
+		const face_t& f = d2->mapa_faces[i];
+
+		double d_novo = (f.n1 * origem.x + f.n2 * origem.y + f.n3 * origem.z) + f.d;
+
+		if(std::abs(d_novo) > EPS) {
+			ponto_3d p_dual{(f.n1 / d_novo), (f.n2 / d_novo), (f.n3 / d_novo)};
+			std::cout << "  Face [" << i << "]: d_novo=" << d_novo
+			          << " \t-> Ponto Dual: " << p_dual << "\n";
+			qh_pontos.push_back(quickhull::Vector3<double>(p_dual.x, p_dual.y, p_dual.z));
+		} else {
+			std::cout << "  Face [" << i << "]: [Ignorada] O plano passa muito perto da origem (d_novo <= EPS).\n";
+		}
+	}
+
+	// ----- PASSO 3: Cálculo do Fecho Convexo Dual -----
+	std::cout << "\n--- PASSO 3: Fecho Convexo no Espaco Dual (QuickHull) ---\n";
+	std::cout << "Total de pontos duais gerados (Faces A + Faces B): " << qh_pontos.size() << "\n";
+
+	if(qh_pontos.size() < 4) {
+		std::cout << "[Erro] Quantidade de pontos duais (" << qh_pontos.size()
+		          << ") insuficiente para formar um poliedro 3D.\n";
+		return;
+	}
+
+	// Executa a QuickHull nos pontos duais
+	quickhull::QuickHull<double> qh;
+	quickhull::ConvexHull<double> hull = qh.getConvexHull(qh_pontos, true, false);
+
+	// Obtém os buffers resultantes
+	const auto& qh_vertices = hull.getVertexBuffer();
+	const auto& qh_indices = hull.getIndexBuffer();
+
+	std::cout << "Fecho Convexo Dual calculado com sucesso!\n";
+	std::cout << "  - Vértices no fecho dual (Correspondem às FACES da Intersecao Primal): " << qh_vertices.size() << "\n";
+	std::cout << "  - Faces triangulares no fecho dual (Correspondem aos VÉRTICES da Intersecao Primal): " << (qh_indices.size() / 3) << "\n";
+
+	// ----- PASSO 4: Restauração para o Espaço Primal -----
+	std::cout << "\n--- PASSO 4: Retorno ao Espaco Primal ---\n";
+	std::cout << "No codigo principal, o fecho convexo gera a DCEL dual e depois reconstruimos as coordenadas primais aplicando a formula:\n";
+	std::cout << "  P_primal_x = (Face_dual_Nx / d_novo) + Origem_x\n";
+	std::cout << "  P_primal_y = (Face_dual_Ny / d_novo) + Origem_y\n";
+	std::cout << "  P_primal_z = (Face_dual_Nz / d_novo) + Origem_z\n";
+
+	std::cout << "\nA topologia e mantida convertendo vizinhancas:\n";
+	std::cout << "  Vertice Dual -> Face Primal\n";
+	std::cout << "  Face Dual -> Vertice Primal\n";
+	std::cout << "==================================================================\n\n";
 }

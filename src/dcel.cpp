@@ -5,20 +5,6 @@ Data: 15/09/2026
 */
 #include "dcel.hpp"
 
-/*
-Lembrete das estruturas em dcel.hpp
-
-struct descritor_dcel{
-  std::vector<ponto_3d> vertices;
-  std::vector<vector<uint64_t>> faces;
-};
-struct dcel_t{
-  std::vector<vertice_3d_t> mapa_vertices;
-  std::vector<face_t> mapa_faces;
-  std::vector<semi_aresta_t> mapa_sa;
-};
-*/
-
 //Cria uma dcel a partir do descritor
 dcel_t* cria_dcel(descritor_dcel* descritor){
 
@@ -248,6 +234,23 @@ void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d){
   }
 }
 
+//Retorna true se as duas faces forem cooplanares
+//Assume EPS = 1E-9 definido em geometria.hpp
+bool sao_faces_cooplanares(const face_t& f1, const face_t& f2){
+	// Produto escalar das normais (N1 . N2)
+	double pe = (f1.n1 * f2.n1) + (f1.n2 * f2.n2) + (f1.n3 * f2.n3);
+
+	// Se o ângulo entre as normais for próximo de 0 (pe ~ 1.0)
+	// E a distância da origem à face (d) for idêntica, são o mesmo plano.
+	if(pe > (1.0 - EPS)) {
+		if(std::abs(f1.d - f2.d) <= EPS) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
 //========================================
 //Metodos do artigo
 //========================================
@@ -332,7 +335,7 @@ bool eh_face_triangular(const dcel_t& d, size_t ind_face){
 //Retorna o indice da face antrior a sa, ou a sa.prox.prox 
 //Caso a face ja seja um trinagulo retorna sa.ante
 //Caso haja algum problema com os pronteiros, retorna INVALID_INDEX
-size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira){
+size_t triangula_face_local(dcel_t& d, size_t sa_primeira){
 
   //==========VERIFICACOES INICIAIS==========
 	//Valida a semi-aresta e sua face estao nos limites da dcel
@@ -426,7 +429,7 @@ size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira){
 }
 
 //========================================
-//Essas duas funceos de triangulacao sao usadas principalmente para dbug
+//Funcoes sobre a topologia da dcel
 //========================================
 
 //Triangula uma face ate q ela fique com 3 vertices
@@ -436,7 +439,7 @@ void triangula_face_completa(dcel_t& d, size_t ind_face) {
 	//Enquanto a face nao for triangular, recorta um triangulo por vez
 	while(!eh_face_triangular(d, ind_face)) {
 		size_t sa_inicio = d.mapa_faces[ind_face].ind_sa_inicial;
-		size_t res = triangula_face_local_mp(d, sa_inicio);
+		size_t res = triangula_face_local(d, sa_inicio);
 
 		//Se retornar INVALID_INDEX, a face eh triangular ou houve falha
 		if(res == INVALID_INDEX) break;
@@ -454,3 +457,114 @@ void triangula_dcel_completa(dcel_t* d) {
 		triangula_face_completa(*d, i);
 	}
 }
+
+
+
+/*================================================================================
+  EM DESENVOLVIMENTO
+  FUNCOES PARA REMOVER FACES COPLANARES DA DCEL
+  (DOR DE CABECA FAZER ISSO)
+
+//Recebe a dcel e o indice de uma sa
+//Faz com que a face da sa.par seja a mesma de sa.face incidente
+//Ajusta todo o contorno da face que vai sumir
+//Nao remove a face do vetor da dcel
+//Retorna 1 se deu certo e 0 em caso de erro
+int mescla_faces(dcel_t* d, size_t ind_sa){
+  if( ind_sa >= d->mapa_sa.size())  return 0;
+  
+  //Auxiliares
+  size_t ind_sa_par = d->mapa_sa[ind_sa].par; 
+  size_t ind_face_perma = d->mapa_sa[ind_sa].ind_face;
+  size_t ind_face_sobrescrita = d->mapa_sa[ind_sa_par].ind_face;
+
+  size_t vert_ini = d->mapa_sa[ind_sa].ind_vertice;
+  size_t vert_fim = d->mapa_sa[ind_sa_par].ind_vertice;
+
+
+  //Pega o contorno da face da sa par
+  std::vector<size_t> contorno_face_oposta = face(*d, ind_face_sobrescrita); 
+
+  //percorre o contorno ajustanto para a face que vai ficar
+  for(size_t i_sa : contorno_face_oposta){
+    d->mapa_sa[i_sa].ind_face = ind_face_perma;
+  }
+
+  //Ajusta a relacao de prox e anterior da sa atual e da twin
+  size_t ind_sa_anterior = d->mapa_sa[ind_sa].ante;
+  size_t ind_sa_prox = d->mapa_sa[ind_sa].prox;
+
+  size_t ind_sa_par_anterior = d->mapa_sa[ind_sa_par].ante;
+  size_t ind_sa_par_prox = d->mapa_sa[ind_sa_par].prox;
+  
+  //anterior e proximo do par
+  d->mapa_sa[ind_sa_par_anterior].prox = ind_sa_prox;
+  d->mapa_sa[ind_sa_par_prox].ante = ind_sa_anterior;
+
+  //anterior e proximo da atual
+  d->mapa_sa[ind_sa_anterior].prox = ind_sa_par_prox;
+  d->mapa_sa[ind_sa_prox].ante = ind_sa_par_anterior;
+
+  //Ajusta a face permanente para apontar para outro lugar que nao a atual sa
+  d->mapa_faces[ind_face_perma].ind_sa_inicial = ind_sa_prox;
+
+  //Ajusta os vertices inicial e final para que apontem para outra sa garantidamente
+  d->mapa_vertices[vert_ini].sa_incidente = ind_sa_par_prox;
+  d->mapa_vertices[vert_fim].sa_incidente = ind_sa_prox;
+
+  //Agora, sa e sa_par nao sao mais necessarios
+  //A face que era da sa_par tbm nao precisa existir mais
+  return 1;
+}
+
+//Desfaz a triangulacao de faces coplanares, cada face da dcel resultante esta em um plano diferente
+//Retorna 1 se deu certo e 0 se houve algum erro
+int remove_faces_coplanares(dcel_t* d){
+
+  if(d == nullptr)  return 0;
+  
+  std::vector<size_t> vetor_sa_removidas;
+  std::vector<size_t> vetor_faces_removidas;
+  size_t sa, sa_par, face;
+
+  //vetor paralelo para controle das sa ja alteradas
+  std::vector<uint8_t> sa_ja_alteradas(d->mapa_sa.size(), 0);
+
+  //Percorre todas as semi-arestas da dcel
+  //Compara se a face incidente eh coplanar em relacao a face incidente no twin
+  //Se for, percorre as sa da face do twin e faz com que todas apontem para a face incidente
+  //Remove a sa e a sa->twin
+  //Resumindo: A face incidente engloba a face_incidente da sa par
+  for(size_t ind_sa = 0; ind_sa < d->mapa_sa.size(); ind_sa++){
+    
+    if(!sa_ja_alteradas[ind_sa]){
+     
+      if(sao_faces_cooplanares( d->mapa_faces[d->mapa_sa[ind_sa].ind_face], d->mapa_faces[d->mapa_sa[d->mapa_sa[ind_sa].par].ind_face])){
+     
+        face = d->mapa_sa[d->mapa_sa[ind_sa].par].ind_face; //sera "consumida" ao mesclar
+        sa = ind_sa; //Inutilizada apos mesclar
+        sa_par = d->mapa_sa[ind_sa].par; //inutilizada apos mesclar
+     
+        if(mescla_faces(d, ind_sa) ){
+          
+          //salva no vetor de controle para nao iterar sobre as sa novamente
+          sa_ja_alteradas[sa_par]=1;
+          
+          //Salva os indices para corrigir a dcel depois
+          vetor_sa_removidas.push_back(sa);
+          vetor_sa_removidas.push_back(sa_par);
+          vetor_faces_removidas.push_back(face);
+        }
+        else{
+          return 0;
+        }
+      }
+    }//pula as sa ja iteradas
+
+  }//Monta um descritor da dcel para atualiuzar os indices corretamente
+
+
+  return 1;
+}
+
+================================================================================*/

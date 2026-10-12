@@ -174,6 +174,10 @@ std::vector<size_t> get_vertices_face(const dcel_t& d, size_t ind_fa);
 //Retorna true se a face eh triangular
 bool eh_face_triangular(const dcel_t& d, size_t ind_face);
 
+//Retorna true se as duas faces forem cooplanares
+//Assume EPS = 1E-9 definido em geometria.hpp
+bool sao_faces_cooplanares(const face_t& f1, const face_t& f2);
+
 //Recebe uma sa, verifica se a sua face correspondente eh triangular
 //Se nao for, cria uma sa que seguira a relacao de sa.prox.prox.prox == sa
 //Com isso a face de sa vira um triangulo
@@ -181,14 +185,14 @@ bool eh_face_triangular(const dcel_t& d, size_t ind_face);
 //Retorna o indice da face antrior a sa, ou a sa.prox.prox 
 //Caso a face ja seja um trinagulo retorna sa.ante
 //Caso haja algum problema com os pronteiros, retorna INVALID_INDEX
-size_t triangula_face_local_mp(dcel_t& d, size_t sa_primeira);
+size_t triangula_face_local(dcel_t& d, size_t sa_primeira);
 
 //Copia o vetor de pontos do descritor para o vetor de vertices da DCEL
 //Os vertices nao possuem indice da semi-aresta incidente
 void copia_pontos_para_vertices(descritor_dcel* descritor, dcel_t* d);
 
 //========================================
-//Essas duas funcoes de triangulacao
+//Funcoes sobre a topologia da dcel
 //========================================
 
 //Triangula uma face ate q ela fique com 3 vertices
@@ -196,5 +200,25 @@ void triangula_face_completa(dcel_t& d, size_t ind_face);
 
 //Triangula todas as faces de um poliedro contido na DCEL
 void triangula_dcel_completa(dcel_t* d);
+
+
+
+/*================================================================================
+  EM DESENVOLVIMENTO
+  FUNCOES PARA REMOVER FACES COPLANARES DA DCEL
+  (DOR DE CABECA FAZER ISSO)
+
+//Recebe a dcel e o indice de uma sa
+//Faz com que a face da sa.par seja a mesma de sa.face incidente
+//Ajusta todo o contorno da face que vai sumir
+//Nao remove a face do vetor da dcel
+//Retorna 1 se deu certo e 0 em caso de erro
+int mescla_faces(dcel_t* d, size_t ind_sa);
+
+//Desfaz a triangulacao de faces coplanares, cada face da dcel resultante esta em um plano diferente
+//Retorna 1 se deu certo e 0 se houve algum erro
+int remove_faces_coplanares(dcel_t* d);
+
+================================================================================*/
 
 #endif

@@ -58,24 +58,22 @@ int main(int argc, char **argv)
   projecao_poligono_2d_t polA = extrai_poligono_projecao(*d1);
   projecao_poligono_2d_t polB = extrai_poligono_projecao(*d2);
 
-  debug_teste_interseccao_2d(polA, polB);
-
   //===============PASSO 2: PONTO COMUM NO DOMINIO DA INTERSECCAO===============
   interseccao_2d_t saida_p_estrela = encontrar_ponto_p_estrela(polA, polB);
   
-  if (saida_p_estrela.cod_origem){ // Existe um ponto na interseccao 2D de A ou B (vertice ou sobreposicao de arestas)
+  if (saida_p_estrela.tem_interseccao){ // Existe um ponto na interseccao 2D de A ou B (vertice ou sobreposicao de arestas)
     
     //===============PASSO 3: PRE IMAGEM===============
-    analise_interseccao_vertical_t pre_img = intervalo_pre_img(d1, d2, saida_p_estrela.p_estrela);
+    analise_interseccao_vertical_t pre_img = intervalo_pre_img(d1, d2, saida_p_estrela.p_estrela_deslocado);
     if(pre_img.existe_sobreposicao){
       //===============PASSO FINAL: PODE IR PARA A DUALIZACAO===============  
-      ponto_3d origem_para_dualizacao = calcula_ponto_interno(pre_img ,saida_p_estrela.p_estrela);
+      ponto_3d origem_para_dualizacao = calcula_ponto_interno(pre_img ,saida_p_estrela.p_estrela_deslocado); 
       dcel_t* d3 = calcula_interseccao_via_dualizacao(d1, d2, origem_para_dualizacao);
-
+      imprime_dcel_no_arquivo(param.arq_saida, d3); //Gera a saida
       delete (d3);
     }
     else{ //===============PASSO 4: ENCONTRAR AS CASCAS NEAR-SIDE===============      
-
+      
     }
   }
   else{
@@ -83,8 +81,6 @@ int main(int argc, char **argv)
     std::cout<<"Poligonos projetados não se sobrepoẽm.\n";
 	}
 
-  
-  //imprime_dcel_formatada(cout, d1);
   // Libera memoria
   delete (d1);
   delete (d2);

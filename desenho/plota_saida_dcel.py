@@ -12,7 +12,8 @@ def ler_malha(nome_arquivo):
         vertices = []
 
         for _ in range(n):
-            x, y, z = map(int, arquivo.readline().split())
+            # Substitui ',' por '.' para aceitar formato decimal brasileiro e converte para float
+            x, y, z = map(float, arquivo.readline().replace(',', '.').split())
             vertices.append((x, y, z))
 
         # Lê as faces

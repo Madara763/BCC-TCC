@@ -1,7 +1,7 @@
 /*
 Essa lib contem funcoes para testar a DCEL e a FITCP
 Tem o objetivo de explanar o funcionamento do artigo "Finding the Intersection of Two Convex Polyhedra" e da DCEL
-Criado por: Davi Lazzarin
+Criado por: Davi Lazzarin 
 Data: 29/09/2026
 */
 #ifndef __DEBUGLIB__
@@ -13,6 +13,8 @@ Data: 29/09/2026
 #include "dcel.hpp"
 #include "fitcp.hpp"
 #include "Clipper2Lib/include/clipper2/clipper.h"
+#include "quickhullLib/QuickHull.hpp"
+
 
 //========================================
 //Define funcoes de debug para a DCEL
@@ -32,6 +34,9 @@ void debug_teste_interseccao_2d(const projecao_poligono_2d_t& pol1, const projec
 
 //Recebe o ponto p* e calcula a pre imagem, imprime na tela detalhes da etapa
 void debug_teste_pre_imagem(dcel_t* d1, dcel_t* d2, ponto_2d p_estrela);
+
+//Recebe as dcel e o ponto interno a ambas, imprime passo a passo a dualizacao os fecho convexo
+void debug_teste_dualizacao(dcel_t* d1, dcel_t* d2, ponto_3d origem);
 
 
 #endif
